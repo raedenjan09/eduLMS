@@ -1,0 +1,300 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   EduLMS Design System — Professional & Minimalist
+   --------------------------------------------------------------------------
+   All pages use Tailwind utility classes. Instead of rewriting every
+   component, the design tokens below re-define the palette, typography,
+   radii and shadows globally so the whole system shares one calm,
+   consistent visual language:
+     • One accent colour (navy blue) — blue / indigo / purple / violet /
+       sky all resolve to the same scale, so buttons and badges no longer
+       compete with each other.
+     • Neutral greys (gray & slate unified) for surfaces, borders and text.
+     • Semantic colours only for meaning: emerald = passed, red = failed,
+       amber = pending / warning.
+     • Lighter type weights, tighter radii and soft, low-contrast shadows.
+   ========================================================================== */
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+
+  /* ---- Typography: calmer weight scale ---- */
+  --font-weight-medium: 500;
+  --font-weight-semibold: 500;
+  --font-weight-bold: 600;
+  --font-weight-extrabold: 650;
+  --font-weight-black: 700;
+
+  /* ---- Radii: tighter, more structured corners ---- */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.625rem;
+  --radius-3xl: 0.75rem;
+
+  /* ---- Shadows: soft and subtle ---- */
+  --shadow-2xs: 0 1px 0 rgb(15 23 42 / 0.03);
+  --shadow-xs: 0 1px 2px rgb(15 23 42 / 0.04);
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.05);
+  --shadow: 0 1px 3px rgb(15 23 42 / 0.06), 0 1px 2px rgb(15 23 42 / 0.04);
+  --shadow-md: 0 4px 10px -2px rgb(15 23 42 / 0.06), 0 2px 4px -2px rgb(15 23 42 / 0.04);
+  --shadow-lg: 0 10px 20px -6px rgb(15 23 42 / 0.08), 0 4px 8px -4px rgb(15 23 42 / 0.04);
+  --shadow-xl: 0 16px 32px -10px rgb(15 23 42 / 0.10);
+  --shadow-2xl: 0 24px 48px -16px rgb(15 23 42 / 0.18);
+
+  /* ---- Neutral palette (gray & slate unified) ---- */
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f2f2f4;
+  --color-gray-200: #e4e4e7;
+  --color-gray-300: #d4d4d8;
+  --color-gray-400: #a1a1aa;
+  --color-gray-500: #71717a;
+  --color-gray-600: #52525b;
+  --color-gray-700: #3f3f46;
+  --color-gray-800: #27272a;
+  --color-gray-900: #18181b;
+  --color-gray-950: #0c0c0e;
+
+  --color-slate-50: #fafafa;
+  --color-slate-100: #f2f2f4;
+  --color-slate-200: #e4e4e7;
+  --color-slate-300: #d4d4d8;
+  --color-slate-400: #a1a1aa;
+  --color-slate-500: #71717a;
+  --color-slate-600: #52525b;
+  --color-slate-700: #3f3f46;
+  --color-slate-800: #27272a;
+  --color-slate-900: #18181b;
+  --color-slate-950: #0c0c0e;
+
+  /* ---- Single accent: professional navy blue ---- */
+  --color-blue-50: #f3f6fb;
+  --color-blue-100: #e4eaf5;
+  --color-blue-200: #c9d5eb;
+  --color-blue-300: #a1b5dc;
+  --color-blue-400: #7190c8;
+  --color-blue-500: #4c6fb4;
+  --color-blue-600: #34569e;
+  --color-blue-700: #2b4785;
+  --color-blue-800: #253b6c;
+  --color-blue-900: #1f3159;
+  --color-blue-950: #141f3a;
+
+  --color-indigo-50: #f3f6fb;
+  --color-indigo-100: #e4eaf5;
+  --color-indigo-200: #c9d5eb;
+  --color-indigo-300: #a1b5dc;
+  --color-indigo-400: #7190c8;
+  --color-indigo-500: #4c6fb4;
+  --color-indigo-600: #34569e;
+  --color-indigo-700: #2b4785;
+  --color-indigo-800: #253b6c;
+  --color-indigo-900: #1f3159;
+  --color-indigo-950: #141f3a;
+
+  --color-purple-50: #f3f6fb;
+  --color-purple-100: #e4eaf5;
+  --color-purple-200: #c9d5eb;
+  --color-purple-300: #a1b5dc;
+  --color-purple-400: #7190c8;
+  --color-purple-500: #4c6fb4;
+  --color-purple-600: #34569e;
+  --color-purple-700: #2b4785;
+  --color-purple-800: #253b6c;
+  --color-purple-900: #1f3159;
+  --color-purple-950: #141f3a;
+
+  --color-violet-50: #f3f6fb;
+  --color-violet-100: #e4eaf5;
+  --color-violet-200: #c9d5eb;
+  --color-violet-300: #a1b5dc;
+  --color-violet-400: #7190c8;
+  --color-violet-500: #4c6fb4;
+  --color-violet-600: #34569e;
+  --color-violet-700: #2b4785;
+  --color-violet-800: #253b6c;
+  --color-violet-900: #1f3159;
+  --color-violet-950: #141f3a;
+
+  --color-sky-50: #f3f6fb;
+  --color-sky-100: #e4eaf5;
+  --color-sky-200: #c9d5eb;
+  --color-sky-300: #a1b5dc;
+  --color-sky-400: #7190c8;
+  --color-sky-500: #4c6fb4;
+  --color-sky-600: #34569e;
+  --color-sky-700: #2b4785;
+  --color-sky-800: #253b6c;
+  --color-sky-900: #1f3159;
+
+  /* ---- Semantic: success (muted emerald, green unified) ---- */
+  --color-emerald-50: #f1f8f4;
+  --color-emerald-100: #dcefe3;
+  --color-emerald-200: #b9dfc8;
+  --color-emerald-300: #8ac7a4;
+  --color-emerald-400: #57a97d;
+  --color-emerald-500: #348c5f;
+  --color-emerald-600: #25744d;
+  --color-emerald-700: #1f5e40;
+  --color-emerald-800: #1b4b34;
+  --color-emerald-900: #173e2c;
+
+  --color-green-50: #f1f8f4;
+  --color-green-100: #dcefe3;
+  --color-green-200: #b9dfc8;
+  --color-green-300: #8ac7a4;
+  --color-green-400: #57a97d;
+  --color-green-500: #348c5f;
+  --color-green-600: #25744d;
+  --color-green-700: #1f5e40;
+  --color-green-800: #1b4b34;
+  --color-green-900: #173e2c;
+
+  /* ---- Semantic: error (muted red, rose unified) ---- */
+  --color-red-50: #fcf4f4;
+  --color-red-100: #f8e3e3;
+  --color-red-200: #f0c6c6;
+  --color-red-300: #e39b9b;
+  --color-red-400: #d06b6b;
+  --color-red-500: #b94646;
+  --color-red-600: #a03636;
+  --color-red-700: #852c2c;
+  --color-red-800: #6d2727;
+  --color-red-900: #5a2323;
+
+  --color-rose-50: #fcf4f4;
+  --color-rose-100: #f8e3e3;
+  --color-rose-200: #f0c6c6;
+  --color-rose-300: #e39b9b;
+  --color-rose-400: #d06b6b;
+  --color-rose-500: #b94646;
+  --color-rose-600: #a03636;
+  --color-rose-700: #852c2c;
+
+  /* ---- Semantic: warning / pending (muted amber) ---- */
+  --color-amber-50: #fcf8ef;
+  --color-amber-100: #f7eed6;
+  --color-amber-200: #eedcab;
+  --color-amber-300: #e2c376;
+  --color-amber-400: #d4a748;
+  --color-amber-500: #b98a2c;
+  --color-amber-600: #9a6f20;
+  --color-amber-700: #7c571c;
+  --color-amber-800: #64461b;
+  --color-amber-900: #533a19;
+}
+
+@layer base {
+  * {
+    @apply border-gray-200;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    font-feature-settings: "cv11", "ss01", "ss03";
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.015em;
+  }
+
+  ::selection {
+    background-color: var(--color-blue-100);
+    color: var(--color-blue-900);
+  }
+
+  /* Calm, consistent keyboard focus state */
+  :focus-visible {
+    outline: 2px solid var(--color-blue-500);
+    outline-offset: 2px;
+  }
+
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: none;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  /* Subtle, unobtrusive scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-gray-300) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--color-gray-300);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer utilities {
+  /* Flatten decorative gradients into calm solid surfaces */
+  .bg-gradient-to-r,
+  .bg-gradient-to-br,
+  .bg-gradient-to-tr,
+  .bg-gradient-to-b {
+    background-image: none !important;
+    background-color: var(--tw-gradient-from, var(--color-blue-600));
+  }
+
+  /* Neutralise coloured glow shadows (e.g. shadow-blue-200) */
+  [class*="shadow-blue-"],
+  [class*="shadow-indigo-"],
+  [class*="shadow-purple-"],
+  [class*="shadow-emerald-"],
+  [class*="shadow-green-"],
+  [class*="shadow-red-"] {
+    --tw-shadow-color: rgb(15 23 42 / 0.06) !important;
+  }
+}
+
+:root {
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+@media print {
+  body {
+    background: #ffffff;
+  }
+}
+
+/* Disable native browser password reveal icons (Edge, IE, Chrome) to prevent duplicate eye icons */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none !important;
+}
