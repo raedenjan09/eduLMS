@@ -27,18 +27,14 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // AI Assistant States
+  // AI Assistant States (Powered exclusively by xAI Grok)
   const [lessonData, setLessonData] = useState(null);
   const [aiQuestionCount, setAiQuestionCount] = useState(10);
   const [aiDifficulty, setAiDifficulty] = useState('medium');
-  const [aiProvider, setAiProvider] = useState('auto'); // 'auto' | 'grok' | 'gemini'
+  const [grokModel, setGrokModel] = useState('grok-beta'); // 'grok-beta' | 'grok-2'
   const [aiCustomText, setAiCustomText] = useState('');
   const [aiCustomApiKey, setAiCustomApiKey] = useState(
-    () =>
-      localStorage.getItem('lms_ai_api_key') ||
-      localStorage.getItem('lms_grok_api_key') ||
-      localStorage.getItem('lms_gemini_api_key') ||
-      ''
+    () => localStorage.getItem('lms_grok_api_key') || localStorage.getItem('lms_ai_api_key') || ''
   );
   const [showAiSettings, setShowAiSettings] = useState(false);
   const [aiScanning, setAiScanning] = useState(false);
@@ -154,19 +150,19 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
         }
       }
 
-      setAiScanStep('AI is analyzing presentation concepts & formulating assessment questions...');
+      setAiScanStep('xAI Grok is analyzing presentation slides & formulating questions...');
 
       const payload = {
         lessonId,
         contentText,
         questionCount: aiQuestionCount,
         difficulty: aiDifficulty,
-        provider: aiProvider,
+        model: grokModel,
         apiKey: aiCustomApiKey.trim() || undefined,
       };
 
       if (aiCustomApiKey.trim()) {
-        localStorage.setItem('lms_ai_api_key', aiCustomApiKey.trim());
+        localStorage.setItem('lms_grok_api_key', aiCustomApiKey.trim());
       }
 
       const { data } = await API.post('/quizzes/generate-ai', payload);
@@ -175,19 +171,17 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
         setAiGeneratedQuestions(data.questions);
         const engineLabel =
           data.source === 'grok'
-            ? 'xAI Grok'
-            : data.source === 'gemini'
-            ? 'Google Gemini'
+            ? `xAI Grok (${data.model || grokModel})`
             : 'Heuristic Presentation Extractor';
         toast.success(
           `Crafted ${data.questions.length} questions using ${engineLabel}!`,
-          'AI Assessment Ready'
+          'Grok Assessment Ready'
         );
         if (data.warning) {
-          toast.info(data.warning, 'AI Engine Note');
+          toast.info(data.warning, 'Grok Engine Note');
         }
       } else {
-        setError('AI could not generate enough questions. Please ensure the presentation has readable slide content.');
+        setError('Grok could not generate enough questions. Please ensure the presentation has readable slide content.');
       }
     } catch (err) {
       console.error('AI quiz generation error:', err);
@@ -546,7 +540,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                 }`}
               >
                 <Bot size={15} className={activeTab === 'ai' ? 'text-white' : 'text-purple-600'} />
-                <span>✨ AI Assistant (Scan Slides)</span>
+                <span>✨ Grok AI (Scan Slides)</span>
                 {aiGeneratedQuestions.length > 0 && (
                   <span className="ml-0.5 px-1.5 py-0.2 text-[10px] bg-green-500 text-white rounded-full font-bold">
                     {aiGeneratedQuestions.length}
@@ -770,10 +764,10 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                       </div>
                       <div>
                         <h4 className="font-extrabold text-base text-gray-900 flex items-center gap-2">
-                          AI Presentation Quiz Generator
+                          xAI Grok Presentation Quiz Generator
                         </h4>
                         <p className="text-xs text-gray-600 leading-relaxed">
-                          Scan PowerPoint slides (.pptx) or PDF presentation decks to automatically craft 10–20 comprehensive assessment questions.
+                          Powered exclusively by xAI Grok. Scans PowerPoint slides (.pptx) or PDF presentation decks to automatically craft 10–20 comprehensive assessment questions.
                         </p>
                       </div>
                     </div>
@@ -916,46 +910,41 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                       className="text-xs font-bold text-purple-600 hover:text-purple-700 flex items-center gap-1"
                     >
                       <Key size={13} />
-                      <span>{showAiSettings ? 'Hide API Settings' : 'xAI Grok / API Key'}</span>
+                      <span>{showAiSettings ? 'Hide Grok Settings' : 'xAI Grok API Key'}</span>
                       {showAiSettings ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                     </button>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* AI Engine Selection */}
+                    {/* Grok Model Selection */}
                     <div className="md:col-span-2">
                       <div className="flex items-center justify-between mb-2">
                         <span className="block text-xs font-bold text-gray-700">
-                          AI Engine & Model
+                          xAI Grok Model
                         </span>
                         <span className="text-[11px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
-                          {aiCustomApiKey.startsWith('xai-')
-                            ? '🚀 xAI Grok Key Configured'
-                            : aiCustomApiKey.startsWith('AIza')
-                            ? '🧠 Gemini Key Configured'
-                            : '⚡ Auto-Detection Ready'}
+                          🚀 Powered Exclusively by xAI Grok
                         </span>
                       </div>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-2 gap-2">
                         {[
-                          { id: 'auto', label: '⚡ Auto Engine', desc: 'Detects key prefix' },
-                          { id: 'grok', label: '🚀 xAI Grok', desc: 'grok-beta model' },
-                          { id: 'gemini', label: '🧠 Google Gemini', desc: '1.5 Flash model' },
+                          { id: 'grok-beta', label: '🚀 Grok Beta', desc: 'Fast academic test reasoning & generation' },
+                          { id: 'grok-2', label: '⚡ Grok 2', desc: 'Advanced academic rigor & multi-concept depth' },
                         ].map((m) => (
                           <button
                             key={m.id}
                             type="button"
-                            onClick={() => setAiProvider(m.id)}
-                            className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border text-left ${
-                              aiProvider === m.id
+                            onClick={() => setGrokModel(m.id)}
+                            className={`py-2.5 px-3.5 rounded-xl text-xs font-bold transition-all border text-left ${
+                              grokModel === m.id
                                 ? 'bg-purple-600 text-white border-purple-600 shadow-sm shadow-purple-200'
                                 : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
                             }`}
                           >
                             <div>{m.label}</div>
                             <div
-                              className={`text-[10px] font-normal ${
-                                aiProvider === m.id ? 'text-purple-200' : 'text-gray-400'
+                              className={`text-[10px] font-normal mt-0.5 ${
+                                grokModel === m.id ? 'text-purple-200' : 'text-gray-400'
                               }`}
                             >
                               {m.desc}
@@ -1016,7 +1005,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                     </div>
                   </div>
 
-                  {/* API Key Drawer (Supports xAI Grok and Gemini) */}
+                  {/* API Key Drawer (xAI Grok) */}
                   {showAiSettings && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
@@ -1027,7 +1016,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-gray-800 flex items-center gap-1.5">
                           <Key size={13} className="text-purple-600" />
-                          xAI Grok or Google Gemini API Key
+                          xAI Grok API Key (Optional)
                         </span>
                         <span className="text-[10px] text-gray-500">Stored securely in your browser</span>
                       </div>
@@ -1035,16 +1024,14 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                         type="password"
                         value={aiCustomApiKey}
                         onChange={(e) => setAiCustomApiKey(e.target.value)}
-                        placeholder="xai-... or AIzaSy... (leave empty to use server AI engine)"
+                        placeholder="xai-... (leave empty to use server pre-configured key)"
                         className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                       />
                       <div className="flex items-center justify-between text-[11px] text-gray-500">
                         <span>
-                          {aiCustomApiKey.startsWith('xai-')
-                            ? '✅ xAI Grok Key Active (grok-beta)'
-                            : aiCustomApiKey.startsWith('AIza')
-                            ? '✅ Google Gemini Key Active'
-                            : 'Enter an xAI Grok key (xai-...) or Google Gemini key (AIza...)'}
+                          {aiCustomApiKey
+                            ? '✅ Custom xAI Grok Key Configured'
+                            : 'Using server default xAI Grok engine'}
                         </span>
                         {aiCustomApiKey && (
                           <button
@@ -1066,7 +1053,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                     <Loader2 className="animate-spin text-purple-600" size={32} />
                     <div>
                       <p className="text-sm font-bold text-purple-900">{aiScanStep || 'Analyzing presentation materials...'}</p>
-                      <p className="text-xs text-purple-700 mt-0.5">Formulating 4-choice questions, answer keys, and academic explanations...</p>
+                      <p className="text-xs text-purple-700 mt-0.5">Formulating 4-choice questions, answer keys, and academic explanations with Grok...</p>
                     </div>
                   </div>
                 ) : (
@@ -1076,7 +1063,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                     className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 text-white font-bold text-sm hover:from-purple-700 hover:to-indigo-800 transition-all shadow-lg shadow-purple-200 flex items-center justify-center gap-2"
                   >
                     <Bot size={18} />
-                    <span>✨ Scan Materials & Generate {aiQuestionCount} Assessment Questions</span>
+                    <span>✨ Scan Materials & Generate Assessment with Grok ({aiQuestionCount} Questions)</span>
                   </button>
                 )}
 

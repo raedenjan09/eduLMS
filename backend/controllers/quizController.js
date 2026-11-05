@@ -451,8 +451,9 @@ const extractJsonArray = (text) => {
   return null;
 };
 
-// Call xAI Grok (grok-beta)
-const callGrokAI = async (text, targetCount, difficulty, apiKey) => {
+// Call xAI Grok API (sole external AI engine)
+const callGrokAI = async (text, targetCount, difficulty, apiKey, model = 'grok-beta') => {
+  const selectedModel = model === 'grok-2' ? 'grok-2-latest' : 'grok-beta';
   const prompt = `You are an expert academic educator designing an assessment for higher education students.
 Based STRICTLY on the following presentation/lecture content, generate exactly ${targetCount} high-quality, academic multiple-choice questions.
 Target Difficulty: ${difficulty}.
@@ -482,7 +483,7 @@ ${text.slice(0, 30000)}`;
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'grok-beta',
+      model: selectedModel,
       messages: [
         {
           role: 'system',
@@ -508,59 +509,6 @@ ${text.slice(0, 30000)}`;
   const questions = extractJsonArray(rawContent);
   if (!questions || questions.length < 10) {
     throw new Error('xAI Grok returned an incomplete or invalid question array.');
-  }
-  return questions;
-};
-
-// Call Google Gemini (gemini-1.5-flash)
-const callGeminiAI = async (text, targetCount, difficulty, apiKey) => {
-  const prompt = `You are an expert academic educator designing an assessment for higher education students.
-Based STRICTLY on the following presentation/lecture content, generate exactly ${targetCount} high-quality, academic multiple-choice questions.
-Target Difficulty: ${difficulty}.
-
-Requirements:
-1. Each question must test comprehension, definitions, or applied knowledge from the provided material.
-2. Provide exactly 4 distinct, plausible answer choices for each question.
-3. Indicate the correct answer using a 0-based integer index (0 for Option A, 1 for Option B, 2 for Option C, 3 for Option D).
-4. Provide a clear, brief explanation explaining why the correct choice is accurate.
-5. Return ONLY a valid JSON array of objects with the exact schema:
-[
-  {
-    "questionText": "Question statement here",
-    "options": ["Choice A", "Choice B", "Choice C", "Choice D"],
-    "correctAnswer": 0,
-    "explanation": "Brief explanation"
-  }
-]
-
-Presentation Material:
-${text.slice(0, 25000)}`;
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.3,
-        },
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const errJson = await response.json().catch(() => ({}));
-    throw new Error(`Gemini HTTP status ${response.status}: ${JSON.stringify(errJson)}`);
-  }
-
-  const data = await response.json();
-  const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  const questions = extractJsonArray(candidateText);
-  if (!questions || questions.length < 10) {
-    throw new Error('Gemini returned an incomplete or invalid question array.');
   }
   return questions;
 };
@@ -630,11 +578,11 @@ const generateHeuristicQuestions = (text, targetCount = 10) => {
   return questions;
 };
 
-// @desc    Generate quiz questions using AI scanning of presentation content
+// @desc    Generate quiz questions using xAI Grok scanning of presentation content
 // @route   POST /api/quizzes/generate-ai
 // @access  Private (Faculty)
 export const generateQuizWithAI = async (req, res) => {
-  const { lessonId, contentText, questionCount = 10, difficulty = 'medium', apiKey, provider = 'auto' } = req.body;
+  const { lessonId, contentText, questionCount = 10, difficulty = 'medium', apiKey, model = 'grok-beta' } = req.body;
   const targetCount = Math.min(20, Math.max(10, Number(questionCount) || 10));
 
   let extractedText = (contentText || '').trim();
@@ -657,7 +605,7 @@ export const generateQuizWithAI = async (req, res) => {
         }
       }
     } catch (err) {
-      console.warn('Could not read lesson for AI generator:', err);
+      console.warn('Could not read lesson for Grok AI generator:', err);
     }
   }
 
@@ -669,59 +617,36 @@ export const generateQuizWithAI = async (req, res) => {
   }
 
   const cleanKey = (apiKey || '').trim();
-  const grokKey = cleanKey.startsWith('xai-') ? cleanKey : (process.env.XAI_API_KEY || process.env.GROK_API_KEY || (provider === 'grok' ? cleanKey : ''));
-  const geminiKey = (!cleanKey.startsWith('xai-') && cleanKey) ? cleanKey : (process.env.GEMINI_API_KEY || '');
+  const grokKey = cleanKey || process.env.XAI_API_KEY || process.env.GROK_API_KEY;
 
   let warningNotice = null;
 
-  // 1. Try Grok (xAI) if selected, key is xai-*, or XAI_API_KEY is configured
-  if (provider === 'grok' || cleanKey.startsWith('xai-') || (!cleanKey && grokKey)) {
-    if (grokKey) {
-      try {
-        const grokQuestions = await callGrokAI(extractedText, targetCount, difficulty, grokKey);
-        return res.json({
-          source: 'grok',
-          count: grokQuestions.length,
-          questions: grokQuestions.slice(0, 20).map((q) => ({
-            questionText: String(q.questionText || '').trim(),
-            options: (q.options || []).slice(0, 4).map((opt) => String(opt || '').trim()),
-            correctAnswer: typeof q.correctAnswer === 'number' ? q.correctAnswer : 0,
-            explanation: String(q.explanation || '').trim(),
-          })),
-        });
-      } catch (grokErr) {
-        console.warn('Grok AI call error:', grokErr.message);
-        warningNotice = grokErr.message.includes('credit') || grokErr.message.includes('permission-denied')
-          ? 'xAI team requires active credits at console.x.ai. Fallback generator was activated so you can proceed.'
-          : `Grok notice: ${grokErr.message}`;
-      }
-    }
-  }
-
-  // 2. Try Gemini if available
-  if (geminiKey) {
+  // 1. Solely use xAI Grok if key is provided or present in environment
+  if (grokKey) {
     try {
-      const geminiQuestions = await callGeminiAI(extractedText, targetCount, difficulty, geminiKey);
+      const grokQuestions = await callGrokAI(extractedText, targetCount, difficulty, grokKey, model);
       return res.json({
-        source: 'gemini',
-        count: geminiQuestions.length,
-        warning: warningNotice,
-        questions: geminiQuestions.slice(0, 20).map((q) => ({
+        source: 'grok',
+        model: model === 'grok-2' ? 'grok-2' : 'grok-beta',
+        count: grokQuestions.length,
+        questions: grokQuestions.slice(0, 20).map((q) => ({
           questionText: String(q.questionText || '').trim(),
           options: (q.options || []).slice(0, 4).map((opt) => String(opt || '').trim()),
           correctAnswer: typeof q.correctAnswer === 'number' ? q.correctAnswer : 0,
           explanation: String(q.explanation || '').trim(),
         })),
       });
-    } catch (geminiErr) {
-      console.warn('Gemini AI execution error:', geminiErr.message);
-      if (!warningNotice) {
-        warningNotice = `Gemini notice: ${geminiErr.message}`;
-      }
+    } catch (grokErr) {
+      console.warn('xAI Grok API call error:', grokErr.message);
+      warningNotice = grokErr.message.includes('credit') || grokErr.message.includes('permission-denied')
+        ? 'xAI team has no active credits on console.x.ai. Emergency heuristic extractor was used so you can proceed.'
+        : `xAI Grok notice: ${grokErr.message}`;
     }
+  } else {
+    warningNotice = 'No xAI Grok API key found. Using heuristic presentation parser.';
   }
 
-  // 3. Built-in intelligent heuristic generator fallback (works 100% offline without API key)
+  // 2. Built-in intelligent heuristic generator fallback (ensures faculty is never blocked if Grok credits expire)
   const fallbackQuestions = generateHeuristicQuestions(extractedText, targetCount);
   return res.json({
     source: 'built-in-heuristic',
