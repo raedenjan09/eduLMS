@@ -45,7 +45,7 @@ export const saveQuiz = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to configure quizzes for this class.' });
     }
 
-    const parsedTimeLimit = Math.max(0, Number(timeLimit) || 0);
+    const parsedTimeLimit = Number(timeLimit) > 0 ? Number(timeLimit) : 30;
     const shouldShuffle = shuffleQuestions !== undefined ? Boolean(shuffleQuestions) : true;
 
     // Check if a quiz already exists for this lesson

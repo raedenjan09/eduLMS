@@ -48,7 +48,8 @@ const QuizTaker = () => {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
-  const [timeLeftSeconds, setTimeLeftSeconds] = useState(null);
+  const [timeLeftSeconds, setTimeLeftSeconds] = useState(1800); // Live countdown timer (default 30 mins)
+  const [totalTimeSeconds, setTotalTimeSeconds] = useState(1800);
 
   const autoSubmittedRef = useRef(false);
 
@@ -62,11 +63,12 @@ const QuizTaker = () => {
     setSelectedAnswers({});
     setResult(null);
     autoSubmittedRef.current = false;
-    if (quizData.timeLimit && quizData.timeLimit > 0) {
-      setTimeLeftSeconds(quizData.timeLimit * 60);
-    } else {
-      setTimeLeftSeconds(null);
-    }
+
+    // Real-time countdown: use configured timeLimit or default to 30 mins
+    const minutes = Number(quizData.timeLimit) > 0 ? Number(quizData.timeLimit) : 30;
+    const totalSecs = minutes * 60;
+    setTimeLeftSeconds(totalSecs);
+    setTotalTimeSeconds(totalSecs);
   }, []);
 
   const loadQuiz = async () => {
@@ -193,8 +195,13 @@ const QuizTaker = () => {
   };
 
   const formatTimer = (secs) => {
-    const mins = Math.floor(secs / 60);
+    if (secs === null || secs === undefined || secs < 0) return '00:00';
+    const hrs = Math.floor(secs / 3600);
+    const mins = Math.floor((secs % 3600) / 60);
     const remSecs = secs % 60;
+    if (hrs > 0) {
+      return `${hrs}:${String(mins).padStart(2, '0')}:${String(remSecs).padStart(2, '0')}`;
+    }
     return `${String(mins).padStart(2, '0')}:${String(remSecs).padStart(2, '0')}`;
   };
 
@@ -264,22 +271,26 @@ const QuizTaker = () => {
 
           {!result && (
             <div className="flex items-center gap-2 shrink-0">
-              {timeLeftSeconds !== null && (
-                <div
-                  className={`flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-black px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border ${
-                    timeLeftSeconds <= 60
-                      ? 'bg-red-50 text-red-700 border-red-300 animate-pulse'
-                      : timeLeftSeconds <= 180
-                        ? 'bg-amber-50 text-amber-800 border-amber-300'
-                        : 'bg-gray-100 text-gray-800 border-gray-200'
-                  }`}
-                >
-                  <Clock size={13} />
-                  <span className="font-mono">{formatTimer(timeLeftSeconds)}</span>
-                </div>
-              )}
+              {/* Real-time countdown clock in navbar */}
+              <div
+                className={`flex items-center gap-1.5 text-xs font-black px-3 py-1.5 rounded-xl border shadow-xs transition-colors ${
+                  timeLeftSeconds <= 60
+                    ? 'bg-red-50 text-red-700 border-red-300 animate-pulse'
+                    : timeLeftSeconds <= 180
+                      ? 'bg-amber-50 text-amber-800 border-amber-300'
+                      : 'bg-indigo-50 text-indigo-900 border-indigo-200'
+                }`}
+              >
+                <Clock size={14} className={timeLeftSeconds <= 60 ? 'text-red-600 animate-spin' : 'text-indigo-600'} />
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider hidden sm:inline">
+                  Time Left:
+                </span>
+                <span className="font-mono text-sm font-black tracking-tight">
+                  {formatTimer(timeLeftSeconds)}
+                </span>
+              </div>
 
-              <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-purple-700 bg-purple-50 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border border-purple-200">
+              <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-purple-700 bg-purple-50 px-2.5 sm:px-3 py-1.5 rounded-xl border border-purple-200">
                 <HelpCircle size={14} />
                 <span>{answeredCount}/{totalQuestions} Answered</span>
               </div>
@@ -299,15 +310,11 @@ const QuizTaker = () => {
             <span>{totalQuestions} Questions</span>
             <span>•</span>
             <span>Minimum Passing Score: <strong>{quiz.passingScore}%</strong></span>
-            {quiz.timeLimit > 0 && (
-              <>
-                <span>•</span>
-                <span className="inline-flex items-center gap-1 text-amber-700 font-semibold">
-                  <Clock size={13} />
-                  Time Limit: {quiz.timeLimit} mins
-                </span>
-              </>
-            )}
+            <span>•</span>
+            <span className="inline-flex items-center gap-1 text-indigo-700 font-bold">
+              <Clock size={13} />
+              Real-Time Timer: {Math.round(totalTimeSeconds / 60)} Minutes
+            </span>
             <span>•</span>
             <span className="inline-flex items-center gap-1 text-indigo-600 font-semibold">
               <Shuffle size={13} />
@@ -315,6 +322,66 @@ const QuizTaker = () => {
             </span>
           </div>
         </div>
+
+        {/* Prominent Real-Time Countdown Timer Card */}
+        {!result && (
+          <div className="mb-6 p-4.5 bg-white border border-gray-200/90 rounded-2xl shadow-xs space-y-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${
+                    timeLeftSeconds <= 60
+                      ? 'bg-red-100 text-red-600 animate-bounce'
+                      : timeLeftSeconds <= 180
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-indigo-100 text-indigo-700'
+                  }`}
+                >
+                  <Clock size={22} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                      Real-Time Countdown Timer
+                    </span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-mono text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+                      {formatTimer(timeLeftSeconds)}
+                    </span>
+                    <span className="text-xs font-semibold text-gray-500">
+                      remaining of {Math.round(totalTimeSeconds / 60)}:00
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-right">
+                <span className="text-[11px] font-bold text-gray-500 block">Assessment Progress</span>
+                <span className="text-sm font-extrabold text-purple-700">
+                  {answeredCount} of {totalQuestions} answered ({Math.round((answeredCount / totalQuestions) * 100)}%)
+                </span>
+              </div>
+            </div>
+
+            {/* Smooth live progress bar of remaining time */}
+            <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+              <div
+                className={`h-full transition-all duration-1000 ${
+                  timeLeftSeconds <= 60
+                    ? 'bg-red-500'
+                    : timeLeftSeconds <= 180
+                    ? 'bg-amber-500'
+                    : 'bg-indigo-600'
+                }`}
+                style={{
+                  width: `${Math.max(0, Math.min(100, (timeLeftSeconds / totalTimeSeconds) * 100))}%`
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Question Jump Navigator */}
         <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs mb-6">

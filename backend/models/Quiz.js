@@ -49,7 +49,7 @@ const quizSchema = new mongoose.Schema({
   },
   timeLimit: {
     type: Number,
-    default: 0, // 0 = untimed, > 0 = time limit in minutes
+    default: 30, // Default 30-minute real-time countdown timer
   },
   shuffleQuestions: {
     type: Boolean,

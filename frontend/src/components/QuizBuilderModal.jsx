@@ -17,7 +17,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
   const [activeTab, setActiveTab] = useState('manual'); // 'manual' | 'ai' | 'bulk'
   const [quizTitle, setQuizTitle] = useState('');
   const [passingScore, setPassingScore] = useState(75);
-  const [timeLimit, setTimeLimit] = useState(0);
+  const [timeLimit, setTimeLimit] = useState(30);
   const [shuffleQuestions, setShuffleQuestions] = useState(true);
   const [questions, setQuestions] = useState([]);
   const [bulkText, setBulkText] = useState('');
@@ -67,7 +67,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
       if (data && data.exists !== false && data.questions) {
         setQuizTitle(data.title || `Quiz: ${lessonTitle}`);
         setPassingScore(data.passingScore || 75);
-        setTimeLimit(data.timeLimit || 0);
+        setTimeLimit(data.timeLimit && data.timeLimit > 0 ? data.timeLimit : 30);
         setShuffleQuestions(data.shuffleQuestions !== false);
         if (data.questions && data.questions.length > 0) {
           setQuestions(data.questions);
@@ -77,7 +77,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
       } else {
         setQuizTitle(`Quiz: ${lessonTitle}`);
         setPassingScore(75);
-        setTimeLimit(0);
+        setTimeLimit(30);
         setShuffleQuestions(true);
         initEmptyQuestions();
       }
@@ -85,7 +85,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
       // No quiz exists yet; initialize default title and starter template
       setQuizTitle(`Quiz: ${lessonTitle}`);
       setPassingScore(75);
-      setTimeLimit(0);
+      setTimeLimit(30);
       setShuffleQuestions(true);
       initEmptyQuestions();
     } finally {
@@ -518,14 +518,14 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                       <label className="block text-xs font-bold text-gray-700 mb-1 ml-1">Time Limit (Minutes)</label>
                       <input
                         type="number"
-                        min={0}
+                        min={1}
                         max={180}
                         value={timeLimit}
-                        onChange={(e) => setTimeLimit(Math.max(0, Number(e.target.value)))}
-                        placeholder="0 = Untimed"
+                        onChange={(e) => setTimeLimit(Math.max(1, Number(e.target.value)))}
+                        placeholder="30"
                         className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                       />
-                      <span className="text-[10px] text-gray-400 ml-1">0 = No time limit</span>
+                      <span className="text-[10px] text-gray-400 ml-1">Default: 30 minutes real-time timer</span>
                     </div>
                   </div>
 
