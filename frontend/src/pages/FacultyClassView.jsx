@@ -354,19 +354,19 @@ const FacultyClassView = () => {
           </div>
 
           {/* Student Class Code Share Card */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/80 rounded-2xl p-4 flex items-center gap-5 shrink-0 shadow-sm">
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/80 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between sm:justify-start gap-4 sm:gap-5 w-full sm:w-auto shadow-sm">
             <div>
               <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest block mb-0.5">
                 Student Class Code
               </span>
-              <span className="text-2xl font-black text-blue-950 font-mono tracking-widest">
+              <span className="text-xl sm:text-2xl font-black text-blue-950 font-mono tracking-widest">
                 {classData.classCode}
               </span>
               <span className="text-[10px] text-gray-500 block">Give to students to enroll</span>
             </div>
             <button
               onClick={handleCopyCode}
-              className={`p-3 rounded-xl transition-all ${
+              className={`p-2.5 sm:p-3 rounded-xl transition-all shrink-0 ${
                 copied
                   ? 'bg-green-600 text-white'
                   : 'bg-white hover:bg-blue-600 hover:text-white text-gray-700 shadow-sm'
@@ -460,17 +460,17 @@ const FacultyClassView = () => {
       </header>
 
       {/* Main Body */}
-      <main className="max-w-7xl mx-auto px-6 md:px-12 py-10">
+      <main className="max-w-7xl mx-auto px-3.5 sm:px-6 md:px-12 py-6 sm:py-10">
         {activeTab === 'syllabus' ? (
           <div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Course Syllabus & Topics</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Course Syllabus & Topics</h2>
                 <p className="text-xs text-gray-500">
                   Topics are unlocked sequentially. Students must achieve at least 75% on each topic assessment to advance.
                 </p>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
                 <span className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-2 rounded-xl">
                   {lessons.length} {lessons.length === 1 ? 'Topic' : 'Topics'} Published
                 </span>
@@ -479,7 +479,7 @@ const FacultyClassView = () => {
                     setLessonToEdit(null);
                     setIsLessonModalOpen(true);
                   }}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-sm inline-flex items-center gap-1.5"
+                  className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-sm inline-flex items-center gap-1.5"
                 >
                   <Plus size={16} />
                   <span>Add Topic</span>
@@ -508,51 +508,55 @@ const FacultyClassView = () => {
                 </button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3.5 sm:space-y-4">
                 {lessons.map((lesson, idx) => (
                   <motion.div
                     key={lesson._id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-xs hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                    className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-200/80 shadow-xs hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 overflow-hidden"
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="w-11 h-11 bg-blue-600 text-white rounded-xl flex items-center justify-center font-extrabold text-sm shrink-0 shadow-xs">
+                    <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                      <div className="w-10 h-10 sm:w-11 sm:h-11 bg-blue-600 text-white rounded-xl flex items-center justify-center font-extrabold text-sm shrink-0 shadow-xs">
                         {lesson.order}
                       </div>
-                      <div>
-                        <h3 className="text-base font-bold text-gray-900">{lesson.title}</h3>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm sm:text-base font-bold text-gray-900 break-all sm:break-words leading-snug">
+                          {lesson.title}
+                        </h3>
                         
                         {/* Lesson Meta Badges */}
-                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2">
                           {lesson.presentationType === 'create' ||
                           (lesson.presentationType !== 'upload' &&
                             lesson.slides?.length > 0 &&
                             !lesson.attachments?.length) ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100">
-                              <Presentation size={13} className="text-blue-600" />
-                              Interactive Slides ({lesson.slides?.length || 0})
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100 max-w-full">
+                              <Presentation size={13} className="text-blue-600 shrink-0" />
+                              <span>Interactive Slides ({lesson.slides?.length || 0})</span>
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100">
-                              <Presentation size={13} className="text-indigo-600" />
-                              {lesson.attachments?.[0]?.fileName
-                                ? `Presentation Deck: ${lesson.attachments[0].fileName}`
-                                : 'Presentation Pending'}
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100 max-w-full">
+                              <Presentation size={13} className="text-indigo-600 shrink-0" />
+                              <span className="truncate max-w-[200px] sm:max-w-md">
+                                {lesson.attachments?.[0]?.fileName
+                                  ? `Deck: ${lesson.attachments[0].fileName}`
+                                  : 'Presentation Pending'}
+                              </span>
                             </span>
                           )}
 
                           {/* Quiz Status Badge */}
                           {lesson.hasQuiz ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
-                              <CheckCircle2 size={13} />
-                              Assessment: {lesson.quizQuestionCount} Questions (75% Passing)
-                              {lesson.quizTimeLimit > 0 && ` • ${lesson.quizTimeLimit}m`}
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 max-w-full">
+                              <CheckCircle2 size={13} className="shrink-0" />
+                              <span>Assessment: {lesson.quizQuestionCount} Qs (75%)</span>
+                              {lesson.quizTimeLimit > 0 && <span>• {lesson.quizTimeLimit}m</span>}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">
-                              <AlertCircle size={13} />
-                              Assessment Pending
+                              <AlertCircle size={13} className="shrink-0" />
+                              <span>Assessment Pending</span>
                             </span>
                           )}
                         </div>
@@ -560,7 +564,7 @@ const FacultyClassView = () => {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex flex-wrap items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-gray-100">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-gray-100 w-full md:w-auto justify-start md:justify-end">
                       {/* Reorder Up/Down Buttons */}
                       <div className="flex items-center bg-gray-100 rounded-xl p-0.5">
                         <button
