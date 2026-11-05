@@ -47,16 +47,23 @@ app.use(
         return callback(null, true);
       }
       const sanitizedOrigin = origin.replace(/\/$/, '');
+      const isAllowedVercel =
+        sanitizedOrigin.endsWith('.vercel.app') ||
+        sanitizedOrigin === 'https://vercel.app';
+
       if (
+        isAllowedVercel ||
         allowedOrigins.includes(origin) ||
         allowedOrigins.includes(sanitizedOrigin) ||
         process.env.NODE_ENV !== 'production'
       ) {
         return callback(null, true);
       }
-      return callback(new Error('Not allowed by CORS'));
+      return callback(new Error(`Not allowed by CORS: ${origin}`));
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   })
 );
 
