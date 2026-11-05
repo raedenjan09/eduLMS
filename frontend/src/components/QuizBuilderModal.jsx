@@ -169,7 +169,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
         setAiGeneratedQuestions(data.questions);
         const engineLabel =
           data.source === 'gemini'
-            ? 'Google Gemini 1.5 Flash'
+            ? 'Google Gemini 2.5 Flash'
             : data.source === 'grok'
             ? 'xAI Grok'
             : 'Heuristic Presentation Extractor';
@@ -767,7 +767,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                           AI Presentation Quiz Generator (Google Gemini)
                         </h4>
                         <p className="text-xs text-gray-600 leading-relaxed">
-                          Powered by <strong>Google Gemini 1.5 Flash</strong> (100% Free). Scans PowerPoint slides (.pptx) or PDF presentation decks to automatically craft 10–20 comprehensive assessment questions.
+                          Powered by <strong>Google Gemini 2.5 Flash</strong> (100% Free). Scans PowerPoint slides (.pptx) or PDF presentation decks to automatically craft 10–20 comprehensive assessment questions.
                         </p>
                       </div>
                     </div>
@@ -921,7 +921,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                       <div className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                         <div>
-                          <p className="text-xs font-bold text-gray-900">Google Gemini 1.5 Flash</p>
+                          <p className="text-xs font-bold text-gray-900">Google Gemini 2.5 Flash</p>
                           <p className="text-[11px] text-gray-500">100% Free tier (15 requests/min, 1,500/day, no credit card required)</p>
                         </div>
                       </div>

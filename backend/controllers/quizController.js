@@ -451,7 +451,7 @@ const extractJsonArray = (text) => {
   return null;
 };
 
-// Call Google Gemini API (gemini-1.5-flash - 100% Free Tier on Google AI Studio)
+// Call Google Gemini API (gemini-2.5-flash - 100% Free Tier on Google AI Studio)
 const callGeminiAI = async (text, targetCount, difficulty, apiKey) => {
   const prompt = `You are an expert academic educator designing an assessment for higher education students.
 Based STRICTLY on the following presentation/lecture content, generate exactly ${targetCount} high-quality, academic multiple-choice questions.
@@ -476,7 +476,7 @@ Presentation Material:
 ${text.slice(0, 25000)}`;
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -676,13 +676,13 @@ export const generateQuizWithAI = async (req, res) => {
 
   let warningNotice = null;
 
-  // 1. Google Gemini 1.5 Flash (Primary Free Engine)
+  // 1. Google Gemini 2.5 Flash (Primary Free Engine)
   if (geminiKey) {
     try {
       const geminiQuestions = await callGeminiAI(extractedText, targetCount, difficulty, geminiKey);
       return res.json({
         source: 'gemini',
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         count: geminiQuestions.length,
         questions: geminiQuestions.slice(0, 20).map((q) => ({
           questionText: String(q.questionText || '').trim(),
