@@ -427,6 +427,144 @@ export const submitQuizAttempt = async (req, res) => {
   }
 };
 
+// Helper: Safely extract JSON array from LLM output (handles raw JSON or markdown codeblocks)
+const extractJsonArray = (text) => {
+  if (!text) return null;
+  const cleaned = text.trim().replace(/^```json/i, '').replace(/^```/i, '').replace(/```$/i, '').trim();
+  const firstBracket = cleaned.indexOf('[');
+  const lastBracket = cleaned.lastIndexOf(']');
+  if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+    const jsonStr = cleaned.slice(firstBracket, lastBracket + 1);
+    try {
+      const parsed = JSON.parse(jsonStr);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) {
+      console.warn('extractJsonArray slice parse failed:', e.message);
+    }
+  }
+  try {
+    const parsed = JSON.parse(cleaned);
+    if (Array.isArray(parsed)) return parsed;
+  } catch (e) {
+    return null;
+  }
+  return null;
+};
+
+// Call xAI Grok (grok-beta)
+const callGrokAI = async (text, targetCount, difficulty, apiKey) => {
+  const prompt = `You are an expert academic educator designing an assessment for higher education students.
+Based STRICTLY on the following presentation/lecture content, generate exactly ${targetCount} high-quality, academic multiple-choice questions.
+Target Difficulty: ${difficulty}.
+
+Requirements:
+1. Each question must test comprehension, definitions, or applied knowledge from the provided material.
+2. Provide exactly 4 distinct, plausible answer choices for each question.
+3. Indicate the correct answer using a 0-based integer index (0 for Option A, 1 for Option B, 2 for Option C, 3 for Option D).
+4. Provide a clear, brief explanation explaining why the correct choice is accurate.
+5. Return ONLY a valid JSON array of objects without Markdown formatting:
+[
+  {
+    "questionText": "Question statement here",
+    "options": ["Choice A", "Choice B", "Choice C", "Choice D"],
+    "correctAnswer": 0,
+    "explanation": "Brief explanation"
+  }
+]
+
+Presentation Material:
+${text.slice(0, 30000)}`;
+
+  const response = await fetch('https://api.x.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'grok-beta',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an academic test maker. Always return strictly a raw JSON array matching the requested schema without markdown backticks.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.3,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    const errMsg = errorBody?.error || errorBody?.message || `xAI Grok HTTP status ${response.status}`;
+    throw new Error(typeof errMsg === 'object' ? JSON.stringify(errMsg) : errMsg);
+  }
+
+  const data = await response.json();
+  const rawContent = data?.choices?.[0]?.message?.content;
+  const questions = extractJsonArray(rawContent);
+  if (!questions || questions.length < 10) {
+    throw new Error('xAI Grok returned an incomplete or invalid question array.');
+  }
+  return questions;
+};
+
+// Call Google Gemini (gemini-1.5-flash)
+const callGeminiAI = async (text, targetCount, difficulty, apiKey) => {
+  const prompt = `You are an expert academic educator designing an assessment for higher education students.
+Based STRICTLY on the following presentation/lecture content, generate exactly ${targetCount} high-quality, academic multiple-choice questions.
+Target Difficulty: ${difficulty}.
+
+Requirements:
+1. Each question must test comprehension, definitions, or applied knowledge from the provided material.
+2. Provide exactly 4 distinct, plausible answer choices for each question.
+3. Indicate the correct answer using a 0-based integer index (0 for Option A, 1 for Option B, 2 for Option C, 3 for Option D).
+4. Provide a clear, brief explanation explaining why the correct choice is accurate.
+5. Return ONLY a valid JSON array of objects with the exact schema:
+[
+  {
+    "questionText": "Question statement here",
+    "options": ["Choice A", "Choice B", "Choice C", "Choice D"],
+    "correctAnswer": 0,
+    "explanation": "Brief explanation"
+  }
+]
+
+Presentation Material:
+${text.slice(0, 25000)}`;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.3,
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errJson = await response.json().catch(() => ({}));
+    throw new Error(`Gemini HTTP status ${response.status}: ${JSON.stringify(errJson)}`);
+  }
+
+  const data = await response.json();
+  const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  const questions = extractJsonArray(candidateText);
+  if (!questions || questions.length < 10) {
+    throw new Error('Gemini returned an incomplete or invalid question array.');
+  }
+  return questions;
+};
+
 // Built-in intelligent heuristic extractor (zero-config fallback if no external API key is configured)
 const generateHeuristicQuestions = (text, targetCount = 10) => {
   const cleanLines = text
@@ -496,7 +634,7 @@ const generateHeuristicQuestions = (text, targetCount = 10) => {
 // @route   POST /api/quizzes/generate-ai
 // @access  Private (Faculty)
 export const generateQuizWithAI = async (req, res) => {
-  const { lessonId, contentText, questionCount = 10, difficulty = 'medium', apiKey } = req.body;
+  const { lessonId, contentText, questionCount = 10, difficulty = 'medium', apiKey, provider = 'auto' } = req.body;
   const targetCount = Math.min(20, Math.max(10, Number(questionCount) || 10));
 
   let extractedText = (contentText || '').trim();
@@ -530,79 +668,65 @@ export const generateQuizWithAI = async (req, res) => {
     });
   }
 
-  const effectiveApiKey = apiKey || process.env.GEMINI_API_KEY;
+  const cleanKey = (apiKey || '').trim();
+  const grokKey = cleanKey.startsWith('xai-') ? cleanKey : (process.env.XAI_API_KEY || process.env.GROK_API_KEY || (provider === 'grok' ? cleanKey : ''));
+  const geminiKey = (!cleanKey.startsWith('xai-') && cleanKey) ? cleanKey : (process.env.GEMINI_API_KEY || '');
 
-  if (effectiveApiKey) {
-    try {
-      const prompt = `You are an expert academic educator designing an assessment for higher education students.
-Based STRICTLY on the following presentation/lecture content, generate exactly ${targetCount} high-quality, academic multiple-choice questions.
-Target Difficulty: ${difficulty}.
+  let warningNotice = null;
 
-Requirements:
-1. Each question must test comprehension, definitions, or applied knowledge from the provided material.
-2. Provide exactly 4 distinct, plausible answer choices for each question.
-3. Indicate the correct answer using a 0-based integer index (0 for Option A, 1 for Option B, 2 for Option C, 3 for Option D).
-4. Provide a clear, brief explanation explaining why the correct choice is accurate.
-5. Return ONLY a valid JSON array of objects with the exact schema:
-[
-  {
-    "questionText": "Question statement here",
-    "options": ["Choice A", "Choice B", "Choice C", "Choice D"],
-    "correctAnswer": 0,
-    "explanation": "Brief explanation"
-  }
-]
-
-Presentation Material:
-${extractedText.slice(0, 25000)}`;
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${effectiveApiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              responseMimeType: 'application/json',
-              temperature: 0.3,
-            },
-          }),
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (candidateText) {
-          const parsed = JSON.parse(candidateText);
-          if (Array.isArray(parsed) && parsed.length >= 10) {
-            return res.json({
-              source: 'gemini',
-              count: parsed.length,
-              questions: parsed.slice(0, 20).map((q) => ({
-                questionText: String(q.questionText || '').trim(),
-                options: (q.options || []).slice(0, 4).map((opt) => String(opt || '').trim()),
-                correctAnswer: typeof q.correctAnswer === 'number' ? q.correctAnswer : 0,
-                explanation: String(q.explanation || '').trim(),
-              })),
-            });
-          }
-        }
-      } else {
-        const errJson = await response.json().catch(() => ({}));
-        console.warn('Gemini API call returned status:', response.status, errJson);
+  // 1. Try Grok (xAI) if selected, key is xai-*, or XAI_API_KEY is configured
+  if (provider === 'grok' || cleanKey.startsWith('xai-') || (!cleanKey && grokKey)) {
+    if (grokKey) {
+      try {
+        const grokQuestions = await callGrokAI(extractedText, targetCount, difficulty, grokKey);
+        return res.json({
+          source: 'grok',
+          count: grokQuestions.length,
+          questions: grokQuestions.slice(0, 20).map((q) => ({
+            questionText: String(q.questionText || '').trim(),
+            options: (q.options || []).slice(0, 4).map((opt) => String(opt || '').trim()),
+            correctAnswer: typeof q.correctAnswer === 'number' ? q.correctAnswer : 0,
+            explanation: String(q.explanation || '').trim(),
+          })),
+        });
+      } catch (grokErr) {
+        console.warn('Grok AI call error:', grokErr.message);
+        warningNotice = grokErr.message.includes('credit') || grokErr.message.includes('permission-denied')
+          ? 'xAI team requires active credits at console.x.ai. Fallback generator was activated so you can proceed.'
+          : `Grok notice: ${grokErr.message}`;
       }
-    } catch (apiErr) {
-      console.error('Gemini API execution error, falling back to heuristic generator:', apiErr);
     }
   }
 
-  // Built-in intelligent heuristic generator fallback (works 100% offline without API key)
+  // 2. Try Gemini if available
+  if (geminiKey) {
+    try {
+      const geminiQuestions = await callGeminiAI(extractedText, targetCount, difficulty, geminiKey);
+      return res.json({
+        source: 'gemini',
+        count: geminiQuestions.length,
+        warning: warningNotice,
+        questions: geminiQuestions.slice(0, 20).map((q) => ({
+          questionText: String(q.questionText || '').trim(),
+          options: (q.options || []).slice(0, 4).map((opt) => String(opt || '').trim()),
+          correctAnswer: typeof q.correctAnswer === 'number' ? q.correctAnswer : 0,
+          explanation: String(q.explanation || '').trim(),
+        })),
+      });
+    } catch (geminiErr) {
+      console.warn('Gemini AI execution error:', geminiErr.message);
+      if (!warningNotice) {
+        warningNotice = `Gemini notice: ${geminiErr.message}`;
+      }
+    }
+  }
+
+  // 3. Built-in intelligent heuristic generator fallback (works 100% offline without API key)
   const fallbackQuestions = generateHeuristicQuestions(extractedText, targetCount);
   return res.json({
     source: 'built-in-heuristic',
     count: fallbackQuestions.length,
+    warning: warningNotice,
     questions: fallbackQuestions,
   });
 };
