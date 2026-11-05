@@ -303,21 +303,22 @@ const LessonViewer = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col pb-16">
       {/* Top Navigation & Module Switcher */}
-      <nav className="bg-white border-b border-slate-200 px-4 md:px-10 py-3 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <nav className="bg-white border-b border-slate-200 px-3.5 sm:px-4 md:px-10 py-3 sticky top-0 z-30 shadow-2xs">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-3">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <button
               onClick={() => navigate(`/student/class/${lesson.classId}`)}
-              className="flex items-center gap-1.5 text-slate-600 hover:text-indigo-600 font-semibold text-xs md:text-sm transition-colors shrink-0"
+              className="flex items-center gap-1 text-slate-600 hover:text-indigo-600 font-semibold text-xs md:text-sm transition-colors shrink-0"
             >
               <ArrowLeft size={16} />
-              <span>List of Lessons</span>
+              <span className="hidden sm:inline">List of Lessons</span>
+              <span className="sm:hidden">Lessons</span>
             </button>
 
             <ChevronRight size={14} className="text-slate-300 shrink-0" />
 
-            <span className="text-xs font-bold text-slate-900 truncate">
+            <span className="text-xs font-bold text-slate-900 truncate max-w-[140px] sm:max-w-md">
               Lesson {lesson.order}: {lesson.title}
             </span>
           </div>
@@ -325,8 +326,8 @@ const LessonViewer = () => {
           {/* Primary Actions: Next Lesson Status */}
           <div className="flex items-center gap-2 shrink-0">
             {effectiveTotalSlides > 0 && (
-              <span className="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-bold">
-                Slide {currentSlideIndex + 1} of {effectiveTotalSlides}
+              <span className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 text-[11px] sm:text-xs font-bold">
+                Slide {currentSlideIndex + 1}/{effectiveTotalSlides}
               </span>
             )}
 
@@ -438,11 +439,11 @@ const LessonViewer = () => {
                   className={
                     isFullscreen
                       ? 'flex-1 w-full bg-slate-900 overflow-auto flex flex-col justify-between'
-                      : 'w-full min-h-[540px] bg-slate-100 flex flex-col justify-between'
+                      : 'w-full min-h-[300px] sm:min-h-[440px] md:min-h-[540px] bg-slate-100 flex flex-col justify-between'
                   }
                 >
                   {uploadLoading ? (
-                    <div className="flex-1 min-h-[480px] flex flex-col items-center justify-center gap-3 text-slate-500">
+                    <div className="flex-1 min-h-[300px] sm:min-h-[440px] flex flex-col items-center justify-center gap-3 text-slate-500 py-12">
                       <Loader2 size={28} className="animate-spin text-indigo-600" />
                       <span className="text-xs font-semibold">
                         Loading presentation slides...
@@ -450,15 +451,15 @@ const LessonViewer = () => {
                     </div>
                   ) : slidePageImageUrls.length > 0 ? (
                     /* Pre-rendered High-DPI Slide Images (PDF or Backend-Converted PPTX): Instant 0ms Switching, 0 Black Slides */
-                    <div className="flex-1 flex items-center justify-center p-4 md:p-6 bg-slate-900/95 overflow-auto">
+                    <div className="flex-1 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-900/95 overflow-auto">
                       {slidePageImageUrls[currentSlideIndex] ? (
                         <img
                           src={slidePageImageUrls[currentSlideIndex]}
                           alt={`Slide ${currentSlideIndex + 1} of ${effectiveTotalSlides}`}
-                          className="rounded-lg shadow-2xl bg-white max-w-full max-h-[620px] object-contain select-none"
+                          className="rounded-lg shadow-2xl bg-white max-w-full max-h-[320px] sm:max-h-[480px] md:max-h-[620px] object-contain select-none"
                         />
                       ) : (
-                        <div className="flex flex-col items-center gap-2 text-slate-300 py-24">
+                        <div className="flex flex-col items-center gap-2 text-slate-300 py-16 sm:py-24">
                           <Loader2 size={24} className="animate-spin text-indigo-400" />
                           <span className="text-xs font-semibold">
                             Rendering Slide {currentSlideIndex + 1}...
@@ -468,7 +469,7 @@ const LessonViewer = () => {
                     </div>
                   ) : uploadTotalSlides > 0 ? (
                     /* Sequential Non-Occluded Office Viewer Stack (Full Opacity, Layered z-index so Office Online Never Paints Black) */
-                    <div className="w-full h-[580px] bg-slate-900 relative overflow-hidden">
+                    <div className="w-full h-[320px] sm:h-[460px] md:h-[580px] bg-slate-900 relative overflow-hidden">
                       {Array.from({ length: uploadTotalSlides }).map((_, slideIdx) => {
                         const isMounted =
                           slideIdx <= Math.max(sequentialPreloadMax, currentSlideIndex);
@@ -507,7 +508,7 @@ const LessonViewer = () => {
                     </div>
                   ) : (
                     /* Fallback Single Frame */
-                    <div className="w-full h-[580px] bg-slate-100">
+                    <div className="w-full h-[320px] sm:h-[460px] md:h-[580px] bg-slate-100">
                       <iframe
                         src={
                           isPdf
@@ -523,30 +524,27 @@ const LessonViewer = () => {
 
                   {/* Slide-by-Slide Navigation Bar */}
                   {effectiveTotalSlides > 0 && (
-                    <div className="px-6 py-4 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-4">
+                    <div className="px-3.5 sm:px-6 py-3 sm:py-4 bg-white border-t border-slate-200 flex items-center justify-between gap-2 sm:gap-4">
                       <button
                         type="button"
                         onClick={handlePrevSlide}
                         disabled={currentSlideIndex === 0}
-                        className="px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1.5"
+                        className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1 sm:gap-1.5 shrink-0"
                       >
                         <ArrowLeft size={15} />
-                        <span>Previous Slide</span>
+                        <span className="hidden xs:inline sm:inline">Previous Slide</span>
+                        <span className="xs:hidden sm:hidden">Prev</span>
                       </button>
 
-                      <div className="flex flex-col items-center text-center">
-                        <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                      <div className="flex flex-col items-center text-center min-w-0">
+                        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold text-slate-800 truncate">
                           <span>
-                            Slide {currentSlideIndex + 1} of {effectiveTotalSlides}
-                            {currentPptxSlide?.title &&
-                            currentPptxSlide.title !== `Slide ${currentSlideIndex + 1}`
-                              ? ` — ${currentPptxSlide.title}`
-                              : ''}
+                            Slide {currentSlideIndex + 1}/{effectiveTotalSlides}
                           </span>
                           {isAtFinalSlide && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                               <CheckCircle2 size={12} />
-                              Final Slide Reached
+                              <span className="hidden sm:inline">Final Slide</span>
                             </span>
                           )}
                         </div>
@@ -556,9 +554,10 @@ const LessonViewer = () => {
                         type="button"
                         onClick={handleNextSlide}
                         disabled={currentSlideIndex >= effectiveTotalSlides - 1}
-                        className="px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-xs disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1.5"
+                        className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-xs disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1 sm:gap-1.5 shrink-0"
                       >
-                        <span>Next Slide</span>
+                        <span className="hidden xs:inline sm:inline">Next Slide</span>
+                        <span className="xs:hidden sm:hidden">Next</span>
                         <ArrowRight size={15} />
                       </button>
                     </div>
@@ -587,13 +586,13 @@ const LessonViewer = () => {
                 </p>
               </div>
             ) : (
-              <div className="flex-1 min-h-[420px] bg-white rounded-2xl border border-slate-200 shadow-xs p-8 md:p-12 flex flex-col justify-between relative overflow-hidden">
+              <div className="flex-1 min-h-[320px] sm:min-h-[420px] bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-8 md:p-12 flex flex-col justify-between relative overflow-hidden">
                 <div>
-                  <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                      Slide {currentSlideIndex + 1} of {slides.length}
+                  <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 mb-4 sm:mb-6 gap-2">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0">
+                      Slide {currentSlideIndex + 1}/{slides.length}
                     </span>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto py-1 max-w-[200px] sm:max-w-none">
                       {slides.map((_, idx) => {
                         const canJump = idx <= maxReachedSlideIndex || hasCompletedPresentation;
                         return (
@@ -602,9 +601,9 @@ const LessonViewer = () => {
                             type="button"
                             disabled={!canJump}
                             onClick={() => goToSlide(idx)}
-                            className={`h-2 rounded-full transition-all ${
+                            className={`h-2 rounded-full transition-all shrink-0 ${
                               idx === currentSlideIndex
-                                ? 'w-6 bg-indigo-600'
+                                ? 'w-5 sm:w-6 bg-indigo-600'
                                 : canJump
                                   ? 'w-2 bg-indigo-200 hover:bg-indigo-400 cursor-pointer'
                                   : 'w-2 bg-slate-200 cursor-not-allowed'
@@ -615,23 +614,23 @@ const LessonViewer = () => {
                     </div>
                   </div>
 
-                  <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 mb-4">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold text-slate-900 mb-3 sm:mb-4">
                     {currentBuiltInSlide?.title}
                   </h2>
 
                   {currentBuiltInSlide?.imageUrl && (currentBuiltInSlide.imagePosition === 'right' || currentBuiltInSlide.imagePosition === 'left') ? (
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-8 items-center mb-6">
                       <div className={`md:col-span-7 ${currentBuiltInSlide.imagePosition === 'left' ? 'md:order-2' : 'md:order-1'}`}>
                         {currentBuiltInSlide?.content && (
-                          <p className="text-sm md:text-base text-slate-700 leading-relaxed mb-5 whitespace-pre-line">
+                          <p className="text-xs sm:text-sm md:text-base text-slate-700 leading-relaxed mb-4 sm:mb-5 whitespace-pre-line">
                             {currentBuiltInSlide.content}
                           </p>
                         )}
                         {currentBuiltInSlide?.bullets && currentBuiltInSlide.bullets.length > 0 && (
-                          <ul className="space-y-3">
+                          <ul className="space-y-2.5 sm:space-y-3">
                             {currentBuiltInSlide.bullets.map((bullet, idx) => (
-                              <li key={idx} className="flex items-start gap-3 text-xs md:text-sm text-slate-800">
-                                <span className="w-2 h-2 rounded-full bg-indigo-600 mt-2 shrink-0" />
+                              <li key={idx} className="flex items-start gap-2.5 sm:gap-3 text-xs sm:text-sm text-slate-800">
+                                <span className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-indigo-600 mt-1.5 sm:mt-2 shrink-0" />
                                 <span>{bullet}</span>
                               </li>
                             ))}
@@ -639,11 +638,11 @@ const LessonViewer = () => {
                         )}
                       </div>
                       <div className={`md:col-span-5 flex justify-center ${currentBuiltInSlide.imagePosition === 'left' ? 'md:order-1' : 'md:order-2'}`}>
-                        <div className="w-full rounded-2xl overflow-hidden border border-slate-200 shadow-xs max-h-80 flex items-center justify-center bg-slate-50 p-2">
+                        <div className="w-full rounded-2xl overflow-hidden border border-slate-200 shadow-xs max-h-60 sm:max-h-80 flex items-center justify-center bg-slate-50 p-2">
                           <img
                             src={currentBuiltInSlide.imageUrl}
                             alt={currentBuiltInSlide.title}
-                            className="max-h-76 max-w-full object-contain rounded-xl"
+                            className="max-h-56 sm:max-h-76 max-w-full object-contain rounded-xl"
                           />
                         </div>
                       </div>
@@ -651,16 +650,16 @@ const LessonViewer = () => {
                   ) : (
                     <>
                       {currentBuiltInSlide?.content && (
-                        <p className="text-sm md:text-base text-slate-700 leading-relaxed mb-6 whitespace-pre-line">
+                        <p className="text-xs sm:text-sm md:text-base text-slate-700 leading-relaxed mb-4 sm:mb-6 whitespace-pre-line">
                           {currentBuiltInSlide.content}
                         </p>
                       )}
 
                       {currentBuiltInSlide?.bullets && currentBuiltInSlide.bullets.length > 0 && (
-                        <ul className="space-y-3 mb-6">
+                        <ul className="space-y-2.5 sm:space-y-3 mb-5 sm:mb-6">
                           {currentBuiltInSlide.bullets.map((bullet, idx) => (
-                            <li key={idx} className="flex items-start gap-3 text-xs md:text-sm text-slate-800">
-                              <span className="w-2 h-2 rounded-full bg-indigo-600 mt-2 shrink-0" />
+                            <li key={idx} className="flex items-start gap-2.5 sm:gap-3 text-xs sm:text-sm text-slate-800">
+                              <span className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-indigo-600 mt-1.5 sm:mt-2 shrink-0" />
                               <span>{bullet}</span>
                             </li>
                           ))}
@@ -668,11 +667,11 @@ const LessonViewer = () => {
                       )}
 
                       {currentBuiltInSlide?.imageUrl && (
-                        <div className="my-6 rounded-2xl overflow-hidden border border-slate-200 shadow-xs max-h-80 flex items-center justify-center bg-slate-50 p-2">
+                        <div className="my-4 sm:my-6 rounded-2xl overflow-hidden border border-slate-200 shadow-xs max-h-60 sm:max-h-80 flex items-center justify-center bg-slate-50 p-2">
                           <img
                             src={currentBuiltInSlide.imageUrl}
                             alt={currentBuiltInSlide.title}
-                            className="max-h-76 max-w-full object-contain rounded-xl"
+                            className="max-h-56 sm:max-h-76 max-w-full object-contain rounded-xl"
                           />
                         </div>
                       )}
@@ -681,22 +680,24 @@ const LessonViewer = () => {
                 </div>
 
                 {/* Slide Navigation Controls */}
-                <div className="flex items-center justify-between pt-6 border-t border-slate-100 mt-8">
+                <div className="flex items-center justify-between pt-4 sm:pt-6 border-t border-slate-100 mt-6 sm:mt-8 gap-2">
                   <button
                     onClick={handlePrevSlide}
                     disabled={currentSlideIndex === 0}
-                    className="px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1.5"
+                    className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1 sm:gap-1.5 shrink-0"
                   >
                     <ArrowLeft size={15} />
-                    <span>Previous Slide</span>
+                    <span className="hidden xs:inline sm:inline">Previous Slide</span>
+                    <span className="xs:hidden sm:hidden">Prev</span>
                   </button>
 
                   <button
                     onClick={handleNextSlide}
                     disabled={currentSlideIndex === slides.length - 1}
-                    className="px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-xs disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1.5"
+                    className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-xs disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1 sm:gap-1.5 shrink-0"
                   >
-                    <span>Next Slide</span>
+                    <span className="hidden xs:inline sm:inline">Next Slide</span>
+                    <span className="xs:hidden sm:hidden">Next</span>
                     <ArrowRight size={15} />
                   </button>
                 </div>

@@ -241,30 +241,32 @@ const QuizTaker = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Top Bar */}
-      <nav className="bg-white border-b border-gray-200 px-6 md:px-12 py-3.5 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+      <nav className="bg-white border-b border-gray-200 px-3.5 sm:px-6 md:px-12 py-3 sticky top-0 z-30 shadow-xs">
+        <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               onClick={() => navigate(`/student/class/${quiz.classId}`)}
-              className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 font-bold text-xs md:text-sm transition-colors"
+              className="flex items-center gap-1 sm:gap-1.5 text-gray-500 hover:text-gray-900 font-bold text-xs sm:text-sm transition-colors shrink-0"
             >
               <ArrowLeft size={16} />
-              <span>Course Syllabus</span>
+              <span className="hidden sm:inline">Course Syllabus</span>
+              <span className="sm:hidden">Syllabus</span>
             </button>
             <span className="text-gray-300">•</span>
             <button
               onClick={() => navigate(`/student/lesson/${quiz.lessonId}`)}
-              className="text-indigo-600 hover:text-indigo-800 font-bold text-xs md:text-sm transition-colors"
+              className="text-indigo-600 hover:text-indigo-800 font-bold text-xs sm:text-sm transition-colors truncate"
             >
-              Return to Presentation
+              <span className="hidden sm:inline">Return to Presentation</span>
+              <span className="sm:hidden">Presentation</span>
             </button>
           </div>
 
           {!result && (
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 shrink-0">
               {timeLeftSeconds !== null && (
                 <div
-                  className={`flex items-center gap-1.5 text-xs font-black px-3 py-1.5 rounded-xl border ${
+                  className={`flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-black px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border ${
                     timeLeftSeconds <= 60
                       ? 'bg-red-50 text-red-700 border-red-300 animate-pulse'
                       : timeLeftSeconds <= 180
@@ -272,21 +274,21 @@ const QuizTaker = () => {
                         : 'bg-gray-100 text-gray-800 border-gray-200'
                   }`}
                 >
-                  <Clock size={14} />
+                  <Clock size={13} />
                   <span className="font-mono">{formatTimer(timeLeftSeconds)}</span>
                 </div>
               )}
 
-              <div className="flex items-center gap-2 text-xs font-bold text-purple-700 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200">
-                <HelpCircle size={15} />
-                <span>{answeredCount} of {totalQuestions} Answered</span>
+              <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-purple-700 bg-purple-50 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl border border-purple-200">
+                <HelpCircle size={14} />
+                <span>{answeredCount}/{totalQuestions} Answered</span>
               </div>
             </div>
           )}
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-6 py-8">
+      <main className="max-w-4xl mx-auto px-3.5 sm:px-6 py-5 sm:py-8">
         {/* Header Banner */}
         <div className="mb-6">
           <span className="text-xs font-bold text-purple-600 uppercase tracking-widest block mb-1">

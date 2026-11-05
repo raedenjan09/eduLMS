@@ -297,26 +297,27 @@ const FacultyClassView = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Top Breadcrumb Bar */}
-      <nav className="bg-white border-b border-gray-200 px-6 md:px-12 py-3.5 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-xs md:text-sm min-w-0">
+      <nav className="bg-white border-b border-gray-200 px-4 sm:px-6 md:px-12 py-3 sm:py-3.5 sticky top-0 z-30 shadow-2xs">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs md:text-sm min-w-0">
             <Link
               to="/faculty"
-              className="flex items-center gap-1.5 text-gray-500 hover:text-blue-600 font-bold transition-colors shrink-0"
+              className="flex items-center gap-1 sm:gap-1.5 text-gray-500 hover:text-blue-600 font-bold transition-colors shrink-0"
             >
               <ArrowLeft size={16} />
-              <span>Faculty Dashboard</span>
+              <span className="hidden sm:inline">Faculty Dashboard</span>
+              <span className="sm:hidden">Dashboard</span>
             </Link>
             <ChevronRight size={14} className="text-gray-300 shrink-0" />
-            <span className="font-extrabold text-gray-900 truncate">
+            <span className="font-extrabold text-gray-900 truncate max-w-[130px] sm:max-w-md">
               {classData.subjectCode} — {classData.name}
             </span>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setIsReportModalOpen(true)}
-              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors flex items-center gap-1.5 border border-emerald-200"
+              className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors flex items-center gap-1.5 border border-emerald-200"
             >
               <Printer size={14} />
               <span className="hidden sm:inline">Class Grade Report</span>
@@ -327,7 +328,7 @@ const FacultyClassView = () => {
       </nav>
 
       {/* Hero Class Banner */}
-      <header className="bg-white border-b border-gray-200 px-6 md:px-12 py-8">
+      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 md:px-12 py-6 sm:py-8">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -378,18 +379,19 @@ const FacultyClassView = () => {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="max-w-7xl mx-auto mt-8 flex items-center gap-2 border-b border-gray-200">
+        <div className="max-w-7xl mx-auto mt-6 sm:mt-8 flex items-center gap-2 border-b border-gray-200 overflow-x-auto">
           <button
             onClick={() => handleTabChange('syllabus')}
-            className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 transition-all relative ${
+            className={`pb-3 px-3 sm:px-4 text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 transition-all relative shrink-0 ${
               activeTab === 'syllabus'
                 ? 'text-blue-600'
                 : 'text-gray-500 hover:text-gray-800'
             }`}
           >
-            <BookOpen size={17} />
-            <span>Course Syllabus & Topics</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full font-extrabold ${
+            <BookOpen size={16} />
+            <span className="hidden sm:inline">Course Syllabus & Topics</span>
+            <span className="sm:hidden">Syllabus</span>
+            <span className={`text-[11px] sm:text-xs px-2 py-0.5 rounded-full font-extrabold ${
               activeTab === 'syllabus'
                 ? 'bg-blue-100 text-blue-800'
                 : 'bg-gray-100 text-gray-600'
@@ -406,15 +408,16 @@ const FacultyClassView = () => {
 
           <button
             onClick={() => handleTabChange('students')}
-            className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 transition-all relative ${
+            className={`pb-3 px-3 sm:px-4 text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 transition-all relative shrink-0 ${
               activeTab === 'students'
                 ? 'text-blue-600'
                 : 'text-gray-500 hover:text-gray-800'
             }`}
           >
-            <Users size={17} />
-            <span>Enrolled Students</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full font-extrabold ${
+            <Users size={16} />
+            <span className="hidden sm:inline">Enrolled Students</span>
+            <span className="sm:hidden">Students</span>
+            <span className={`text-[11px] sm:text-xs px-2 py-0.5 rounded-full font-extrabold ${
               activeTab === 'students'
                 ? 'bg-blue-100 text-blue-800'
                 : 'bg-gray-100 text-gray-600'

@@ -298,43 +298,43 @@ const CreateLessonModal = ({ isOpen, onClose, classId, lessonToEdit, nextTopicNu
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
         <motion.div
           initial={{ opacity: 0, scale: 0.97, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.97, y: 8 }}
-          className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]"
+          className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[96vh]"
         >
           {/* Modal Header */}
-          <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-600 p-2.5 rounded-xl text-white shadow-xs">
+          <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="bg-blue-600 p-2 sm:p-2.5 rounded-xl text-white shadow-xs shrink-0">
                 <BookOpen size={18} />
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
                     {lessonToEdit ? 'Edit Course Topic' : 'Add Course Topic'}
                   </h3>
-                  <span className="px-2 py-0.5 text-[11px] font-bold bg-blue-100 text-blue-800 rounded-md">
+                  <span className="px-2 py-0.5 text-[10px] sm:text-[11px] font-bold bg-blue-100 text-blue-800 rounded-md shrink-0">
                     Topic {lessonToEdit ? lessonToEdit.order : nextTopicNumber}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Configure the topic title and select the presentation format visible to students.
+                <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 truncate sm:overflow-visible">
+                  Configure the topic title and select the presentation format.
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors"
+              className="p-1.5 sm:p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors shrink-0"
             >
               <X size={18} />
             </button>
           </div>
 
           {/* Scrollable Form Body */}
-          <div className="p-6 overflow-y-auto flex-1 space-y-6">
+          <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-5 sm:space-y-6">
             {/* Error Banner */}
             {error && (
               <div className="p-3.5 bg-red-50 text-red-700 text-xs font-semibold rounded-xl border border-red-200 flex items-center gap-2.5">

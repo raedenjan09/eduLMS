@@ -90,48 +90,49 @@ const StudentClassView = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Top Breadcrumb Bar */}
-      <nav className="bg-white border-b border-gray-200 px-6 md:px-12 py-3.5 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-xs md:text-sm min-w-0">
+      <nav className="bg-white border-b border-gray-200 px-4 sm:px-6 md:px-12 py-3 sm:py-3.5 sticky top-0 z-30 shadow-2xs">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs md:text-sm min-w-0">
             <Link
               to="/student"
-              className="flex items-center gap-1.5 text-gray-500 hover:text-indigo-600 font-bold transition-colors shrink-0"
+              className="flex items-center gap-1 sm:gap-1.5 text-gray-500 hover:text-indigo-600 font-bold transition-colors shrink-0"
             >
               <ArrowLeft size={16} />
-              <span>Student Portal</span>
+              <span className="hidden sm:inline">Student Portal</span>
+              <span className="sm:hidden">Portal</span>
             </Link>
             <ChevronRight size={14} className="text-gray-300 shrink-0" />
-            <span className="font-extrabold text-gray-900 truncate">
+            <span className="font-extrabold text-gray-900 truncate max-w-[130px] sm:max-w-md">
               {classData.subjectCode} — {classData.name}
             </span>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-xs font-bold text-gray-500 hidden sm:inline">Mastery Progress:</span>
-            <span className={`text-xs font-black px-2.5 py-1 rounded-lg ${
+            <span className={`text-[11px] sm:text-xs font-black px-2 sm:px-2.5 py-1 rounded-lg ${
               isCourseCompleted
                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                 : 'bg-indigo-50 text-indigo-600'
             }`}>
-              {completedCount} / {lessons.length} Lessons ({progressPercent}%)
+              {completedCount}/{lessons.length} ({progressPercent}%)
             </span>
           </div>
         </div>
       </nav>
 
       {/* Hero Header */}
-      <header className="bg-white border-b border-gray-200 px-6 md:px-12 py-8">
+      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 md:px-12 py-6 sm:py-8">
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-lg text-xs font-extrabold uppercase tracking-wider">
+              <span className="px-2.5 sm:px-3 py-1 bg-indigo-100 text-indigo-800 rounded-lg text-xs font-extrabold uppercase tracking-wider">
                 {classData.subjectCode}
               </span>
               <span className="text-xs font-semibold text-gray-500">
                 {classData.term} • AY {classData.year}
               </span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-black text-gray-900">{classData.name}</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900">{classData.name}</h1>
             <p className="text-xs text-gray-500 mt-1">
               Instructor: <strong className="text-gray-700">{classData.faculty?.name}</strong>
             </p>
@@ -147,7 +148,7 @@ const StudentClassView = () => {
                 />
               </div>
               <div className="flex justify-between text-[11px] text-gray-500 mt-1.5 font-medium">
-                <span>Sequential Mastery: Review the lesson presentation and score at least 75% on the assessment to advance</span>
+                <span>Sequential Mastery (≥75% to advance)</span>
                 <span>{progressPercent}%</span>
               </div>
             </div>
@@ -155,7 +156,7 @@ const StudentClassView = () => {
 
           {/* Quick Jump to Current Lesson */}
           {currentActiveLesson && (
-            <div className="p-5 rounded-2xl bg-indigo-50/70 border border-indigo-100 flex items-center justify-between gap-4 lg:w-96 shrink-0">
+            <div className="p-4 sm:p-5 rounded-2xl bg-indigo-50/70 border border-indigo-100 flex items-center justify-between gap-4 lg:w-96 shrink-0">
               <div className="min-w-0">
                 <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 block">
                   {isCourseCompleted ? 'Course Completed' : `Current Module • Lesson ${currentActiveLesson.order}`}
@@ -163,15 +164,15 @@ const StudentClassView = () => {
                 <h3 className="text-sm font-bold text-gray-900 truncate mt-0.5">
                   {currentActiveLesson.title}
                 </h3>
-                <p className="text-[11px] text-gray-500 mt-0.5">
+                <p className="text-[11px] text-gray-500 mt-0.5 truncate">
                   {isCourseCompleted
                     ? 'All lessons and assessments completed'
-                    : 'Review presentation & complete assessment (75%)'}
+                    : 'Review presentation & complete assessment'}
                 </p>
               </div>
               <button
                 onClick={() => navigate(`/student/lesson/${currentActiveLesson._id}`)}
-                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shrink-0 shadow-xs transition-all"
+                className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shrink-0 shadow-xs transition-all"
               >
                 <PlayCircle size={15} />
                 <span>{isCourseCompleted ? 'Review' : 'Continue'}</span>
@@ -182,7 +183,7 @@ const StudentClassView = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 md:px-12 py-8 space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-8 space-y-6 sm:space-y-8">
         {/* Announcements Stream (if any) */}
         {classData.announcements && classData.announcements.length > 0 && (
           <section>

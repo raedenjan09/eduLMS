@@ -194,33 +194,33 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <nav className="bg-white border-b border-gray-200 px-6 md:px-12 py-4 flex justify-between items-center sticky top-0 z-30">
-        <div className="flex items-center gap-3">
-          <div className="bg-purple-600 p-2 rounded-xl">
+      <nav className="bg-white border-b border-gray-200 px-4 sm:px-6 md:px-12 py-3 sm:py-4 flex justify-between items-center sticky top-0 z-30 shadow-2xs">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="bg-purple-600 p-2 rounded-xl shrink-0">
             <ShieldCheck className="text-white h-5 w-5" />
           </div>
-          <span className="text-xl font-bold text-gray-900 tracking-tight">EduLMS Admin</span>
+          <span className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">EduLMS Admin</span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => setIsProfileOpen(true)}
             title="Profile & Password Settings"
-            className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 py-1.5 rounded-2xl hover:bg-gray-100 transition-colors"
           >
             {user?.profilePicture ? (
               <img
                 src={user.profilePicture}
                 alt={user.name}
-                className="w-8 h-8 rounded-xl object-cover border border-gray-200"
+                className="w-7 sm:w-8 h-7 sm:h-8 rounded-xl object-cover border border-gray-200"
               />
             ) : (
-              <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 font-bold text-xs flex items-center justify-center">
+              <div className="w-7 sm:w-8 h-7 sm:h-8 rounded-xl bg-purple-100 text-purple-700 font-bold text-xs flex items-center justify-center">
                 {user?.name?.charAt(0)?.toUpperCase() || 'A'}
               </div>
             )}
             <div className="text-right hidden sm:block">
-              <div className="text-sm font-bold text-gray-900 leading-tight">{user?.name}</div>
+              <div className="text-xs sm:text-sm font-bold text-gray-900 leading-tight">{user?.name}</div>
               <div className="text-[11px] text-gray-400 capitalize">{user?.role}</div>
             </div>
             <Settings size={16} className="text-gray-400" />
@@ -229,14 +229,14 @@ const AdminDashboard = () => {
           <button
             onClick={handleLogout}
             title="Log Out"
-            className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+            className="p-2 sm:p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
           >
             <LogOut size={18} />
           </button>
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-6 md:px-12 py-10">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-10">
         <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">Admin Dashboard</h1>

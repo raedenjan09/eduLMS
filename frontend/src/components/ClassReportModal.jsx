@@ -572,19 +572,19 @@ const ClassReportModal = ({ isOpen, onClose, classId }) => {
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.97 }}
-          className="bg-white rounded-2xl max-w-5xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] print:max-h-none print:shadow-none print:border-none print:w-full"
+          className="bg-white rounded-2xl max-w-5xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[96vh] print:max-h-none print:shadow-none print:border-none print:w-full"
         >
           {/* Modal Toolbar (Hidden in Print) */}
-          <div className="px-6 py-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-slate-50/80 print:hidden">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-600 p-2.5 rounded-xl text-white">
+          <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-slate-50/80 print:hidden">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="bg-blue-600 p-2 sm:p-2.5 rounded-xl text-white shrink-0">
                 <Award size={19} />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">
+                <h3 className="text-sm sm:text-base font-bold text-slate-900">
                   Class Performance &amp; Grade Report
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-[11px] sm:text-xs text-slate-500">
                   Download as formatted Excel or PDF, or print an official hard copy
                 </p>
               </div>
@@ -594,25 +594,27 @@ const ClassReportModal = ({ isOpen, onClose, classId }) => {
               <button
                 onClick={handleExportExcel}
                 disabled={!reportData || reportData.students?.length === 0}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+                className="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors flex items-center gap-1.5 shadow-xs disabled:opacity-50"
               >
                 <FileSpreadsheet size={15} />
-                <span>Download Excel (.xls)</span>
+                <span className="hidden sm:inline">Download Excel (.xls)</span>
+                <span className="sm:hidden">Excel</span>
               </button>
 
               <button
                 onClick={handleDownloadPDF}
                 disabled={!reportData}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+                className="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-xs disabled:opacity-50"
               >
                 <FileDown size={15} />
-                <span>Download PDF (.pdf)</span>
+                <span className="hidden sm:inline">Download PDF (.pdf)</span>
+                <span className="sm:hidden">PDF</span>
               </button>
 
               <button
                 onClick={handlePrintReport}
                 disabled={!reportData}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                className="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 transition-colors flex items-center gap-1.5 disabled:opacity-50"
               >
                 <Printer size={15} />
                 <span>Print</span>
@@ -620,7 +622,7 @@ const ClassReportModal = ({ isOpen, onClose, classId }) => {
 
               <button
                 onClick={onClose}
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors ml-1"
+                className="p-1.5 sm:p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors ml-1"
               >
                 <X size={18} />
               </button>
@@ -628,7 +630,7 @@ const ClassReportModal = ({ isOpen, onClose, classId }) => {
           </div>
 
           {/* Printable Report Content */}
-          <div className="p-6 md:p-8 overflow-y-auto flex-1 space-y-6 print:p-0">
+          <div className="p-4 sm:p-6 md:p-8 overflow-y-auto flex-1 space-y-5 sm:space-y-6 print:p-0">
             {loading ? (
               <div className="py-24 flex flex-col items-center justify-center text-slate-400 gap-3">
                 <Loader2 className="animate-spin text-blue-600" size={32} />
@@ -744,8 +746,12 @@ const ClassReportModal = ({ isOpen, onClose, classId }) => {
                       <strong>{reportData.summary.classCode}</strong> with your students to begin tracking grades.
                     </div>
                   ) : (
-                    <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-                      <div className="overflow-x-auto">
+                    <div>
+                      <div className="text-[11px] text-slate-500 sm:hidden flex items-center justify-end gap-1 mb-1 font-medium">
+                        <span>Scroll horizontally to view all topics &rarr;</span>
+                      </div>
+                      <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                        <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs border-collapse">
                           <thead>
                             <tr className="bg-slate-800 text-white font-bold">
@@ -818,7 +824,8 @@ const ClassReportModal = ({ isOpen, onClose, classId }) => {
                         </table>
                       </div>
                     </div>
-                  )}
+                  </div>
+                )}
                 </div>
 
                 {/* Signoff Footer */}

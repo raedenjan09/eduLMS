@@ -101,13 +101,13 @@ const FacultyDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Top Navbar */}
-      <nav className="bg-white border-b border-gray-200 px-6 md:px-12 py-3.5 flex justify-between items-center sticky top-0 z-30">
-        <div className="flex items-center gap-3">
-          <div className="bg-blue-600 p-2 rounded-xl">
+      <nav className="bg-white border-b border-gray-200 px-4 sm:px-6 md:px-12 py-3 sm:py-3.5 flex justify-between items-center sticky top-0 z-30 shadow-2xs">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="bg-blue-600 p-2 rounded-xl shrink-0">
             <BookOpen className="text-white h-5 w-5" />
           </div>
           <div>
-            <span className="text-lg font-black text-gray-900 tracking-tight block leading-none">
+            <span className="text-base sm:text-lg font-black text-gray-900 tracking-tight block leading-none">
               EduLMS
             </span>
             <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">
@@ -116,20 +116,20 @@ const FacultyDashboard = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             onClick={() => setIsProfileOpen(true)}
             title="Profile & Password Settings"
-            className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 py-1.5 rounded-xl hover:bg-gray-100 transition-colors"
           >
             {user?.profilePicture ? (
               <img
                 src={user.profilePicture}
                 alt={user.name}
-                className="w-8 h-8 rounded-lg object-cover border border-gray-200"
+                className="w-7 sm:w-8 h-7 sm:h-8 rounded-lg object-cover border border-gray-200"
               />
             ) : (
-              <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center">
+              <div className="w-7 sm:w-8 h-7 sm:h-8 rounded-lg bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center">
                 {user?.name?.charAt(0)?.toUpperCase() || 'F'}
               </div>
             )}
@@ -143,14 +143,14 @@ const FacultyDashboard = () => {
           <button
             onClick={handleLogout}
             title="Log Out"
-            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+            className="p-1.5 sm:p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
           >
             <LogOut size={18} />
           </button>
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-6 md:px-12 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 sm:py-8">
         <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
