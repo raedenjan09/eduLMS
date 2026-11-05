@@ -516,17 +516,17 @@ const FacultyClassView = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-200/80 shadow-xs hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 overflow-hidden"
                   >
-                    <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3 sm:gap-4 min-w-0 flex-1">
                       <div className="w-10 h-10 sm:w-11 sm:h-11 bg-blue-600 text-white rounded-xl flex items-center justify-center font-extrabold text-sm shrink-0 shadow-xs">
                         {lesson.order}
                       </div>
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0 flex-1 flex flex-col items-center sm:items-start">
                         <h3 className="text-sm sm:text-base font-bold text-gray-900 break-all sm:break-words leading-snug">
                           {lesson.title}
                         </h3>
                         
                         {/* Lesson Meta Badges */}
-                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2">
+                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2 mt-2">
                           {lesson.presentationType === 'create' ||
                           (lesson.presentationType !== 'upload' &&
                             lesson.slides?.length > 0 &&
@@ -563,8 +563,8 @@ const FacultyClassView = () => {
                       </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex flex-wrap items-center gap-2 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-gray-100 w-full md:w-auto justify-start md:justify-end">
+                    {/* Actions — Middle Aligned on Mobile */}
+                    <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-gray-100 w-full md:w-auto">
                       {/* Reorder Up/Down Buttons */}
                       <div className="flex items-center bg-gray-100 rounded-xl p-0.5">
                         <button
