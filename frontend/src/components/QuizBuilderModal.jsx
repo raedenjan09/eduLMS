@@ -14,7 +14,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
   const toast = useToast();
   const fileInputRef = useRef(null);
   const aiFileInputRef = useRef(null);
-  const [activeTab, setActiveTab] = useState('manual'); // 'manual' | 'ai' | 'bulk' | 'templates'
+  const [activeTab, setActiveTab] = useState('manual'); // 'manual' | 'ai' | 'bulk'
   const [quizTitle, setQuizTitle] = useState('');
   const [passingScore, setPassingScore] = useState(75);
   const [timeLimit, setTimeLimit] = useState(0);
@@ -320,108 +320,6 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
     toast.info('Downloaded 10-question CSV template.', 'Template Downloaded');
   };
 
-  // Load sample 10-question template
-  const loadSampleQuestions = () => {
-    const sampleTopic = lessonTitle || 'Lesson Topics';
-    const samples = [
-      {
-        questionText: `What is the primary objective of studying ${sampleTopic}?`,
-        options: [
-          'To establish foundational conceptual and practical understanding',
-          'To bypass foundational theory entirely',
-          'To eliminate the need for systematic testing',
-          'None of the above',
-        ],
-        correctAnswer: 0,
-        explanation: 'Foundational concepts guide reliable application.',
-      },
-      {
-        questionText: 'Which principle emphasizes modularity in design?',
-        options: [
-          'High coupling and monolithic architecture',
-          'Separation of concerns into decoupled components',
-          'Duplicating business logic across modules',
-          'Ignoring interface contracts',
-        ],
-        correctAnswer: 1,
-        explanation: 'Separation of concerns enhances maintainability.',
-      },
-      {
-        questionText: 'What is the required passing score for assessments in this LMS?',
-        options: ['50%', '60%', '75%', '90%'],
-        correctAnswer: 2,
-        explanation: 'A 75% score demonstrates sequential mastery.',
-      },
-      {
-        questionText: 'What happens when a student scores below 75%?',
-        options: [
-          'They proceed immediately without restrictions',
-          'Progression is locked until they retake and achieve >= 75%',
-          'The account is permanently disabled',
-          'The lesson is skipped',
-        ],
-        correctAnswer: 1,
-        explanation: 'Prerequisites must be passed with at least 75%.',
-      },
-      {
-        questionText: 'How is data integrity verified in distributed systems?',
-        options: [
-          'Through cryptographic hashing and consensus validation',
-          'By assuming network transmission is always lossless',
-          'By removing validation checks',
-          'Through random sampling without verification',
-        ],
-        correctAnswer: 0,
-        explanation: 'Hashes confirm message payloads remain untampered.',
-      },
-      {
-        questionText: 'Which format is standard for exchanging structured web data?',
-        options: ['JSON', 'Raw binary dumps without schema', 'Unstructured text', 'Bitmap audio'],
-        correctAnswer: 0,
-        explanation: 'JSON is lightweight, universally parsed, and standard.',
-      },
-      {
-        questionText: 'What is the benefit of sequential lesson locking?',
-        options: [
-          'Guarantees required prerequisite knowledge before advanced topics',
-          'Prevents students from studying',
-          'Slows down instructional delivery unnecessarily',
-          'Removes faculty oversight',
-        ],
-        correctAnswer: 0,
-        explanation: 'Sequential learning ensures topics build upon mastered concepts.',
-      },
-      {
-        questionText: 'Which HTTP method is conventionally used for state-modifying submissions?',
-        options: ['GET', 'POST', 'OPTIONS', 'HEAD'],
-        correctAnswer: 1,
-        explanation: 'POST represents form and assessment submissions.',
-      },
-      {
-        questionText: 'What is the role of an educator in the evaluation cycle?',
-        options: [
-          'Monitoring student performance and guiding mastery',
-          'Ignoring assessment metrics',
-          'Refusing feedback on attempts',
-          'Preventing quiz retakes entirely',
-        ],
-        correctAnswer: 0,
-        explanation: 'Reports and metrics help instructors tailor support.',
-      },
-      {
-        questionText: 'Which document format is optimal for official academic reports?',
-        options: ['PDF / Printable Spreadsheet', 'Unformatted clipboard snippet', 'Temporary session cache', 'Single-character text'],
-        correctAnswer: 0,
-        explanation: 'PDF and spreadsheets provide persistent, auditable grade records.',
-      },
-    ];
-
-    setQuestions(samples);
-    setActiveTab('manual');
-    setSuccess('10-Question Starter Template loaded! You can now customize each question.');
-    setTimeout(() => setSuccess(''), 3000);
-  };
-
   const handleSave = async () => {
     setError('');
     setSuccess('');
@@ -551,17 +449,6 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
               >
                 <FileSpreadsheet size={15} />
                 Bulk CSV / Text Upload
-              </button>
-              <button
-                onClick={() => setActiveTab('templates')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
-                  activeTab === 'templates'
-                    ? 'bg-purple-600 text-white shadow-sm shadow-purple-200'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                <Sparkles size={15} />
-                Sample Templates
               </button>
             </div>
 
@@ -1066,7 +953,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                   </div>
                 )}
               </div>
-            ) : activeTab === 'bulk' ? (
+            ) : (
               /* Bulk Upload Tab */
               <div className="space-y-4">
                 <div className="p-4 bg-purple-50 border border-purple-100 rounded-2xl text-xs text-purple-900 leading-relaxed">
@@ -1156,24 +1043,6 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                     </>
                   )}
                 </button>
-              </div>
-            ) : (
-              /* Sample Templates Tab */
-              <div className="space-y-4">
-                <div className="p-5 bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-100 rounded-3xl">
-                  <h4 className="font-bold text-base text-gray-900 mb-1">10-Question Standard Assessment Template</h4>
-                  <p className="text-xs text-gray-600 mb-4 leading-relaxed">
-                    Instantly load a curated 10-question assessment structure that satisfies the LMS minimum requirement. You can preview, edit, or adjust every question and answer in the interactive builder before publishing.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={loadSampleQuestions}
-                    className="px-5 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-bold hover:bg-purple-700 transition-all shadow-md shadow-purple-200 flex items-center gap-2"
-                  >
-                    <Sparkles size={15} />
-                    Load 10-Question Template Now
-                  </button>
-                </div>
               </div>
             )}
           </div>
