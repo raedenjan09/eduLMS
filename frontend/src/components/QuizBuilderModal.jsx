@@ -2,15 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, HelpCircle, Plus, Trash2, CheckCircle2, 
-  Upload, FileSpreadsheet, Sparkles, AlertCircle, Loader2, Download, FileText
+  Upload, FileSpreadsheet, Sparkles, AlertCircle, Loader2, Download, FileText,
+  Bot, Layers, Settings2, Key, Check, ChevronDown, ChevronUp, FileUp, Presentation
 } from 'lucide-react';
+import axios from 'axios';
 import API from '../api/axios';
 import { useToast } from '../context/ToastContext';
+import { isPdfArrayBuffer, extractTextFromPptx, extractTextFromPdf } from '../utils/presentationParser';
 
 const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQuizSaved }) => {
   const toast = useToast();
   const fileInputRef = useRef(null);
-  const [activeTab, setActiveTab] = useState('manual'); // 'manual' | 'bulk' | 'templates'
+  const aiFileInputRef = useRef(null);
+  const [activeTab, setActiveTab] = useState('manual'); // 'manual' | 'ai' | 'bulk' | 'templates'
   const [quizTitle, setQuizTitle] = useState('');
   const [passingScore, setPassingScore] = useState(75);
   const [timeLimit, setTimeLimit] = useState(0);
@@ -23,11 +27,35 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // AI Assistant States
+  const [lessonData, setLessonData] = useState(null);
+  const [aiQuestionCount, setAiQuestionCount] = useState(10);
+  const [aiDifficulty, setAiDifficulty] = useState('medium');
+  const [aiCustomText, setAiCustomText] = useState('');
+  const [aiCustomApiKey, setAiCustomApiKey] = useState(() => localStorage.getItem('lms_gemini_api_key') || '');
+  const [showAiSettings, setShowAiSettings] = useState(false);
+  const [aiScanning, setAiScanning] = useState(false);
+  const [aiScanStep, setAiScanStep] = useState('');
+  const [aiGeneratedQuestions, setAiGeneratedQuestions] = useState([]);
+  const [aiUploadedFile, setAiUploadedFile] = useState(null);
+
   useEffect(() => {
     if (isOpen && lessonId) {
       loadExistingQuiz();
+      loadLessonInfo();
+      setAiGeneratedQuestions([]);
+      setAiUploadedFile(null);
     }
   }, [isOpen, lessonId]);
+
+  const loadLessonInfo = async () => {
+    try {
+      const { data } = await API.get(`/lessons/${lessonId}`);
+      setLessonData(data);
+    } catch (err) {
+      console.warn('Could not load lesson details for AI builder', err);
+    }
+  };
 
   const loadExistingQuiz = async () => {
     setFetching(true);
@@ -61,6 +89,109 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
     } finally {
       setFetching(false);
     }
+  };
+
+  const handleGenerateWithAI = async () => {
+    setError('');
+    setAiScanning(true);
+    setAiScanStep('Scanning presentation materials...');
+
+    try {
+      let contentText = aiCustomText.trim();
+
+      // 1. If faculty selected a custom PPT/PDF directly in the modal
+      if (aiUploadedFile) {
+        setAiScanStep(`Reading ${aiUploadedFile.name}...`);
+        const buffer = await aiUploadedFile.arrayBuffer();
+        if (aiUploadedFile.name.toLowerCase().endsWith('.pdf') || isPdfArrayBuffer(buffer)) {
+          setAiScanStep('Extracting text from PDF presentation...');
+          const extracted = await extractTextFromPdf(buffer);
+          contentText = (contentText ? contentText + '\n\n' : '') + extracted;
+        } else {
+          setAiScanStep('Extracting slides & text from PowerPoint (.pptx)...');
+          const extracted = await extractTextFromPptx(buffer);
+          contentText = (contentText ? contentText + '\n\n' : '') + extracted;
+        }
+      } else if (!contentText && lessonData) {
+        // 2. Scan the lesson's attached file if present
+        const attachment = lessonData.attachments?.[0];
+        if (attachment && attachment.fileUrl) {
+          setAiScanStep(`Scanning ${attachment.fileName}...`);
+          try {
+            const resp = await axios.get(attachment.fileUrl, { responseType: 'arraybuffer' });
+            const buffer = resp.data;
+            if (attachment.fileName.toLowerCase().endsWith('.pdf') || isPdfArrayBuffer(buffer)) {
+              setAiScanStep('Extracting text from PDF slides...');
+              const extracted = await extractTextFromPdf(buffer);
+              contentText = (contentText ? contentText + '\n\n' : '') + extracted;
+            } else {
+              setAiScanStep('Extracting text from PowerPoint deck (.pptx)...');
+              const extracted = await extractTextFromPptx(buffer);
+              contentText = (contentText ? contentText + '\n\n' : '') + extracted;
+            }
+          } catch (fetchErr) {
+            console.warn('Could not extract file directly on client, sending to backend fallback:', fetchErr);
+          }
+        } else if (lessonData.slides?.length > 0) {
+          // 3. Scan interactive built-in slides
+          setAiScanStep(`Reading ${lessonData.slides.length} interactive slides...`);
+          contentText = lessonData.slides
+            .map(
+              (s, i) =>
+                `Slide ${i + 1}: ${s.title || ''}\n${s.content || ''}\n${(s.bullets || []).join('\n')}`
+            )
+            .join('\n\n');
+          if (lessonData.summary) {
+            contentText += `\n\nLesson Summary:\n${lessonData.summary}`;
+          }
+        }
+      }
+
+      setAiScanStep('AI is analyzing academic concepts & formulating questions...');
+
+      const payload = {
+        lessonId,
+        contentText,
+        questionCount: aiQuestionCount,
+        difficulty: aiDifficulty,
+        apiKey: aiCustomApiKey.trim() || undefined,
+      };
+
+      if (aiCustomApiKey.trim()) {
+        localStorage.setItem('lms_gemini_api_key', aiCustomApiKey.trim());
+      }
+
+      const { data } = await API.post('/quizzes/generate-ai', payload);
+
+      if (data?.questions && data.questions.length >= 10) {
+        setAiGeneratedQuestions(data.questions);
+        toast.success(
+          `AI Assistant successfully crafted ${data.questions.length} questions from the presentation!`,
+          'AI Generation Ready'
+        );
+      } else {
+        setError('AI could not generate enough questions. Please ensure the presentation has readable slide content.');
+      }
+    } catch (err) {
+      console.error('AI quiz generation error:', err);
+      setError(
+        err.response?.data?.message ||
+          'Failed to generate questions. Please ensure the file has text or paste notes below.'
+      );
+    } finally {
+      setAiScanning(false);
+      setAiScanStep('');
+    }
+  };
+
+  const handleApplyAiQuestions = () => {
+    if (!aiGeneratedQuestions || aiGeneratedQuestions.length === 0) return;
+    setQuestions(aiGeneratedQuestions);
+    setActiveTab('manual');
+    toast.success(
+      `Applied ${aiGeneratedQuestions.length} AI-generated questions into the quiz builder! You can review or tweak them.`,
+      'Questions Applied'
+    );
   };
 
   const initEmptyQuestions = () => {
@@ -377,11 +508,11 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
           </div>
 
           {/* Navigation Bar / Mode Tabs */}
-          <div className="px-6 py-2.5 border-b border-gray-100 flex items-center justify-between bg-white">
-            <div className="flex gap-2">
+          <div className="px-6 py-2.5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3 bg-white">
+            <div className="flex flex-wrap sm:flex-nowrap gap-2 overflow-x-auto pb-1 sm:pb-0 w-full md:w-auto">
               <button
                 onClick={() => setActiveTab('manual')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
                   activeTab === 'manual'
                     ? 'bg-purple-600 text-white shadow-sm shadow-purple-200'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -390,8 +521,24 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                 Interactive Builder ({questions.length}/20)
               </button>
               <button
+                onClick={() => setActiveTab('ai')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+                  activeTab === 'ai'
+                    ? 'bg-purple-600 text-white shadow-sm shadow-purple-200 ring-2 ring-purple-300'
+                    : 'bg-gradient-to-r from-purple-50 to-indigo-50 text-purple-700 hover:bg-purple-100 border border-purple-200/70'
+                }`}
+              >
+                <Bot size={15} className={activeTab === 'ai' ? 'text-white' : 'text-purple-600'} />
+                <span>✨ AI Assistant (Scan Slides)</span>
+                {aiGeneratedQuestions.length > 0 && (
+                  <span className="ml-0.5 px-1.5 py-0.2 text-[10px] bg-green-500 text-white rounded-full font-bold">
+                    {aiGeneratedQuestions.length}
+                  </span>
+                )}
+              </button>
+              <button
                 onClick={() => setActiveTab('bulk')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
                   activeTab === 'bulk'
                     ? 'bg-purple-600 text-white shadow-sm shadow-purple-200'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -402,7 +549,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
               </button>
               <button
                 onClick={() => setActiveTab('templates')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
                   activeTab === 'templates'
                     ? 'bg-purple-600 text-white shadow-sm shadow-purple-200'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -414,7 +561,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
             </div>
 
             {/* Questions Counter Badge */}
-            <div className={`text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 ${
+            <div className={`text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shrink-0 ${
               questions.length >= 10 && questions.length <= 20
                 ? 'bg-green-100 text-green-700'
                 : 'bg-amber-100 text-amber-700'
@@ -592,6 +739,360 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                     <Plus size={18} />
                     Add Question ({questions.length + 1} of 20)
                   </button>
+                )}
+              </div>
+            ) : activeTab === 'ai' ? (
+              /* AI Assistant Tab */
+              <div className="space-y-6">
+                {/* Intro Card */}
+                <div className="p-5 bg-gradient-to-br from-purple-50 via-indigo-50 to-purple-100/50 border border-purple-100 rounded-3xl relative overflow-hidden">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative z-10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-purple-200 shrink-0">
+                        <Bot size={22} />
+                      </div>
+                      <div>
+                        <h4 className="font-extrabold text-base text-gray-900 flex items-center gap-2">
+                          AI Presentation Quiz Generator
+                        </h4>
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          Scan PowerPoint slides (.pptx) or PDF presentation decks to automatically craft 10–20 comprehensive assessment questions.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detected Presentation Material */}
+                <div className="p-5 bg-white border border-gray-200/80 rounded-2xl space-y-4 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <Presentation size={15} className="text-purple-600" />
+                      Presentation Source Material
+                    </label>
+                    <span className="text-[11px] font-semibold text-gray-400">
+                      Supports .pptx and .pdf
+                    </span>
+                  </div>
+
+                  {/* Attached Lesson Deck Banner if present */}
+                  {lessonData?.attachments?.[0] && !aiUploadedFile && (
+                    <div className="p-3.5 bg-purple-50/70 border border-purple-200/70 rounded-xl flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                          <Presentation size={18} />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">
+                            Attached Lesson Deck Detected
+                          </span>
+                          <p className="text-xs font-bold text-gray-900 truncate">
+                            {lessonData.attachments[0].fileName}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-bold text-green-700 bg-green-100 px-2.5 py-1 rounded-full shrink-0">
+                        Auto-detected
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Interactive Slides Banner if present */}
+                  {!lessonData?.attachments?.[0] && lessonData?.slides?.length > 0 && !aiUploadedFile && (
+                    <div className="p-3.5 bg-indigo-50/70 border border-indigo-200/70 rounded-xl flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+                          <Layers size={18} />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block">
+                            Interactive Slide Deck Detected
+                          </span>
+                          <p className="text-xs font-bold text-gray-900 truncate">
+                            {lessonData.slides.length} slides with lecture content
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-bold text-indigo-700 bg-indigo-100 px-2.5 py-1 rounded-full shrink-0">
+                        {lessonData.slides.length} Slides
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Upload Custom / New File Picker */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 bg-gray-50/80 border-2 border-dashed border-purple-200 hover:border-purple-300 rounded-2xl transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                        <FileUp size={20} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-gray-900 truncate">
+                          {aiUploadedFile ? `Selected: ${aiUploadedFile.name}` : 'Upload or Drag & Drop PPTX / PDF'}
+                        </p>
+                        <p className="text-[11px] text-gray-500">
+                          {aiUploadedFile
+                            ? `${(aiUploadedFile.size / (1024 * 1024)).toFixed(2)} MB • Ready to scan`
+                            : 'Scan custom lecture slides or presentation file'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {aiUploadedFile && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAiUploadedFile(null);
+                            if (aiFileInputRef.current) aiFileInputRef.current.value = '';
+                          }}
+                          className="px-3 py-2 text-xs font-semibold text-gray-500 hover:text-red-600 rounded-xl hover:bg-gray-100 transition-colors"
+                        >
+                          Clear
+                        </button>
+                      )}
+                      <input
+                        ref={aiFileInputRef}
+                        type="file"
+                        accept=".pptx,.pdf,.ppt"
+                        onChange={(e) => {
+                          if (e.target.files?.[0]) {
+                            setAiUploadedFile(e.target.files[0]);
+                          }
+                        }}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => aiFileInputRef.current?.click()}
+                        className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition-all shadow-sm flex items-center justify-center gap-1.5"
+                      >
+                        <Upload size={14} />
+                        {aiUploadedFile ? 'Change File' : 'Choose Presentation'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Optional Extra Notes or Excerpt */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Additional Study Notes / Excerpts (Optional)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={aiCustomText}
+                      onChange={(e) => setAiCustomText(e.target.value)}
+                      placeholder="Paste additional key concepts, textbook summaries, or specific formulas you want the AI to include in the quiz..."
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Generator Settings */}
+                <div className="p-5 bg-white border border-gray-200/80 rounded-2xl space-y-4 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <Settings2 size={15} className="text-purple-600" />
+                      Generation Parameters
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowAiSettings(!showAiSettings)}
+                      className="text-xs font-bold text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                    >
+                      <Key size={13} />
+                      <span>{showAiSettings ? 'Hide API Key' : 'Gemini API Key'}</span>
+                      {showAiSettings ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Question Count Selection */}
+                    <div>
+                      <span className="block text-xs font-bold text-gray-700 mb-2">
+                        Questions to Generate (Min 10, Max 20)
+                      </span>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[10, 15, 20].map((num) => (
+                          <button
+                            key={num}
+                            type="button"
+                            onClick={() => setAiQuestionCount(num)}
+                            className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                              aiQuestionCount === num
+                                ? 'bg-purple-600 text-white border-purple-600 shadow-sm shadow-purple-200'
+                                : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                            }`}
+                          >
+                            {num} Questions
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Difficulty Selection */}
+                    <div>
+                      <span className="block text-xs font-bold text-gray-700 mb-2">
+                        Cognitive Depth / Difficulty
+                      </span>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { id: 'easy', label: 'Foundational' },
+                          { id: 'medium', label: 'Balanced' },
+                          { id: 'hard', label: 'Advanced' },
+                        ].map((d) => (
+                          <button
+                            key={d.id}
+                            type="button"
+                            onClick={() => setAiDifficulty(d.id)}
+                            className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                              aiDifficulty === d.id
+                                ? 'bg-purple-600 text-white border-purple-600 shadow-sm shadow-purple-200'
+                                : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                            }`}
+                          >
+                            {d.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Gemini API Key Drawer (Optional) */}
+                  {showAiSettings && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="p-3.5 bg-gray-50 border border-gray-200 rounded-xl space-y-2 text-xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-gray-800 flex items-center gap-1.5">
+                          <Key size={13} className="text-purple-600" />
+                          Custom Google Gemini API Key (Optional)
+                        </span>
+                        <span className="text-[10px] text-gray-500">Stored securely in your browser</span>
+                      </div>
+                      <input
+                        type="password"
+                        value={aiCustomApiKey}
+                        onChange={(e) => setAiCustomApiKey(e.target.value)}
+                        placeholder="AIzaSy... (leave empty to use server AI engine)"
+                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                      />
+                      <p className="text-[11px] text-gray-500 leading-relaxed">
+                        If left blank, the system automatically uses the pre-configured server Gemini 1.5 Flash model and fallback heuristic concept generator.
+                      </p>
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Scan Action / Progress Button */}
+                {aiScanning ? (
+                  <div className="p-6 bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50 border border-purple-200 rounded-2xl flex flex-col items-center justify-center gap-3 text-center animate-pulse">
+                    <Loader2 className="animate-spin text-purple-600" size={32} />
+                    <div>
+                      <p className="text-sm font-bold text-purple-900">{aiScanStep || 'Analyzing presentation materials...'}</p>
+                      <p className="text-xs text-purple-700 mt-0.5">Formulating 4-choice questions, answer keys, and academic explanations...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleGenerateWithAI}
+                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 text-white font-bold text-sm hover:from-purple-700 hover:to-indigo-800 transition-all shadow-lg shadow-purple-200 flex items-center justify-center gap-2"
+                  >
+                    <Bot size={18} />
+                    <span>✨ Scan Materials & Generate {aiQuestionCount} Assessment Questions</span>
+                  </button>
+                )}
+
+                {/* Generated Questions Preview Card */}
+                {aiGeneratedQuestions.length > 0 && (
+                  <div className="space-y-4 pt-2">
+                    <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                          <CheckCircle2 size={20} />
+                        </div>
+                        <div>
+                          <h4 className="font-extrabold text-sm text-emerald-900">
+                            {aiGeneratedQuestions.length} Questions Generated Successfully!
+                          </h4>
+                          <p className="text-xs text-emerald-700">
+                            Each question features 4 choices, a verified answer key, and an explanation.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleApplyAiQuestions}
+                        className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-2"
+                      >
+                        <Check size={14} />
+                        Apply All Questions to Builder
+                      </button>
+                    </div>
+
+                    {/* Preview Cards List */}
+                    <div className="space-y-3">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block ml-1">
+                        AI Generated Questions Preview ({aiGeneratedQuestions.length})
+                      </span>
+                      {aiGeneratedQuestions.map((q, idx) => (
+                        <div
+                          key={idx}
+                          className="p-4 bg-white border border-gray-200 rounded-2xl space-y-3 shadow-sm hover:border-purple-200 transition-all"
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <span className="w-6 h-6 rounded-lg bg-purple-100 text-purple-700 font-extrabold text-xs flex items-center justify-center shrink-0">
+                              {idx + 1}
+                            </span>
+                            <div className="flex-1">
+                              <h5 className="font-bold text-xs text-gray-900 leading-snug">
+                                {q.questionText}
+                              </h5>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-8">
+                            {q.options.map((opt, oIdx) => {
+                              const isCorrect = oIdx === q.correctAnswer;
+                              return (
+                                <div
+                                  key={oIdx}
+                                  className={`p-2.5 rounded-xl border text-xs font-medium flex items-center gap-2 ${
+                                    isCorrect
+                                      ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold'
+                                      : 'bg-gray-50/70 border-gray-200 text-gray-600'
+                                  }`}
+                                >
+                                  <span
+                                    className={`w-5 h-5 rounded-full text-[10px] flex items-center justify-center font-bold shrink-0 ${
+                                      isCorrect
+                                        ? 'bg-emerald-600 text-white'
+                                        : 'bg-gray-200 text-gray-600'
+                                    }`}
+                                  >
+                                    {String.fromCharCode(65 + oIdx)}
+                                  </span>
+                                  <span className="truncate">{opt}</span>
+                                  {isCorrect && (
+                                    <Check size={12} className="text-emerald-600 ml-auto shrink-0" />
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {q.explanation && (
+                            <div className="pl-8 pt-1 text-[11px] text-gray-500 italic">
+                              <strong className="text-purple-700 font-semibold">Explanation: </strong>
+                              {q.explanation}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             ) : activeTab === 'bulk' ? (

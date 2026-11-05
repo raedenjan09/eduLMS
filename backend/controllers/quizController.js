@@ -426,3 +426,183 @@ export const submitQuizAttempt = async (req, res) => {
     res.status(500).json({ message: 'Failed to process quiz submission.' });
   }
 };
+
+// Built-in intelligent heuristic extractor (zero-config fallback if no external API key is configured)
+const generateHeuristicQuestions = (text, targetCount = 10) => {
+  const cleanLines = text
+    .split(/\r?\n/)
+    .map((l) => l.trim().replace(/^[-*•–—\d.)\s]+/, '').trim())
+    .filter((l) => l.length > 15 && l.length < 220);
+
+  const concepts = [];
+  cleanLines.forEach((line) => {
+    const match =
+      line.match(/^([^:–—]+)[:–—]\s*(.+)$/) ||
+      line.match(/^([A-Za-z\s]{3,35})\s+(is|are|refers to|means|enables|defines)\s+(.+)$/i);
+    if (match) {
+      concepts.push({
+        term: match[1].trim(),
+        definition: (match[3] || match[2]).trim(),
+      });
+    } else if (line.split(' ').length >= 5) {
+      concepts.push({
+        term: line.split(' ').slice(0, 4).join(' '),
+        definition: line,
+      });
+    }
+  });
+
+  const pool =
+    concepts.length >= targetCount
+      ? concepts
+      : [...concepts, ...cleanLines.map((l) => ({ term: l.slice(0, 30), definition: l }))];
+
+  const questions = [];
+  const total = Math.min(20, Math.max(10, targetCount));
+
+  for (let i = 0; i < total; i++) {
+    const item =
+      pool[i % pool.length] || {
+        term: `Topic Concept ${i + 1}`,
+        definition: `Core learning objective covered in topic presentation ${i + 1}`,
+      };
+
+    const distractors = pool
+      .filter((_, idx) => idx !== (i % pool.length))
+      .map((d) => d.term || d.definition.slice(0, 35))
+      .filter(Boolean)
+      .slice(0, 3);
+
+    while (distractors.length < 3) {
+      distractors.push(`Alternative Principle ${distractors.length + 1}`);
+    }
+
+    const correctIndex = i % 4;
+    const options = [...distractors];
+    options.splice(correctIndex, 0, item.term);
+
+    questions.push({
+      questionText: `Which of the following best corresponds to: "${item.definition.slice(0, 150)}${item.definition.length > 150 ? '...' : ''}"?`,
+      options: options.slice(0, 4),
+      correctAnswer: correctIndex,
+      explanation: `According to the presentation material, "${item.term}" directly describes: ${item.definition.slice(0, 140)}.`,
+    });
+  }
+
+  return questions;
+};
+
+// @desc    Generate quiz questions using AI scanning of presentation content
+// @route   POST /api/quizzes/generate-ai
+// @access  Private (Faculty)
+export const generateQuizWithAI = async (req, res) => {
+  const { lessonId, contentText, questionCount = 10, difficulty = 'medium', apiKey } = req.body;
+  const targetCount = Math.min(20, Math.max(10, Number(questionCount) || 10));
+
+  let extractedText = (contentText || '').trim();
+
+  // If contentText was not passed directly, load from lesson model slides
+  if (!extractedText && lessonId && mongoose.Types.ObjectId.isValid(lessonId)) {
+    try {
+      const lesson = await Lesson.findById(lessonId);
+      if (lesson) {
+        if (lesson.slides && lesson.slides.length > 0) {
+          extractedText = lesson.slides
+            .map(
+              (s, i) =>
+                `Slide ${i + 1}: ${s.title || ''}\n${s.content || ''}\n${(s.bullets || []).join('\n')}`
+            )
+            .join('\n\n');
+        }
+        if (lesson.summary) {
+          extractedText += `\n\nLesson Summary:\n${lesson.summary}`;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not read lesson for AI generator:', err);
+    }
+  }
+
+  if (!extractedText || extractedText.length < 15) {
+    return res.status(400).json({
+      message:
+        'No readable text content found in the presentation. Please upload a presentation file or provide lesson text.',
+    });
+  }
+
+  const effectiveApiKey = apiKey || process.env.GEMINI_API_KEY;
+
+  if (effectiveApiKey) {
+    try {
+      const prompt = `You are an expert academic educator designing an assessment for higher education students.
+Based STRICTLY on the following presentation/lecture content, generate exactly ${targetCount} high-quality, academic multiple-choice questions.
+Target Difficulty: ${difficulty}.
+
+Requirements:
+1. Each question must test comprehension, definitions, or applied knowledge from the provided material.
+2. Provide exactly 4 distinct, plausible answer choices for each question.
+3. Indicate the correct answer using a 0-based integer index (0 for Option A, 1 for Option B, 2 for Option C, 3 for Option D).
+4. Provide a clear, brief explanation explaining why the correct choice is accurate.
+5. Return ONLY a valid JSON array of objects with the exact schema:
+[
+  {
+    "questionText": "Question statement here",
+    "options": ["Choice A", "Choice B", "Choice C", "Choice D"],
+    "correctAnswer": 0,
+    "explanation": "Brief explanation"
+  }
+]
+
+Presentation Material:
+${extractedText.slice(0, 25000)}`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${effectiveApiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              temperature: 0.3,
+            },
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (candidateText) {
+          const parsed = JSON.parse(candidateText);
+          if (Array.isArray(parsed) && parsed.length >= 10) {
+            return res.json({
+              source: 'gemini',
+              count: parsed.length,
+              questions: parsed.slice(0, 20).map((q) => ({
+                questionText: String(q.questionText || '').trim(),
+                options: (q.options || []).slice(0, 4).map((opt) => String(opt || '').trim()),
+                correctAnswer: typeof q.correctAnswer === 'number' ? q.correctAnswer : 0,
+                explanation: String(q.explanation || '').trim(),
+              })),
+            });
+          }
+        }
+      } else {
+        const errJson = await response.json().catch(() => ({}));
+        console.warn('Gemini API call returned status:', response.status, errJson);
+      }
+    } catch (apiErr) {
+      console.error('Gemini API execution error, falling back to heuristic generator:', apiErr);
+    }
+  }
+
+  // Built-in intelligent heuristic generator fallback (works 100% offline without API key)
+  const fallbackQuestions = generateHeuristicQuestions(extractedText, targetCount);
+  return res.json({
+    source: 'built-in-heuristic',
+    count: fallbackQuestions.length,
+    questions: fallbackQuestions,
+  });
+};

@@ -73,6 +73,68 @@ export const parsePptxArrayBuffer = async (arrayBuffer) => {
 };
 
 /**
+ * Extract all readable text from a .pptx ArrayBuffer across all slides.
+ */
+export const extractTextFromPptx = async (arrayBuffer) => {
+  const zip = await JSZip.loadAsync(arrayBuffer);
+  const parser = new DOMParser();
+
+  const slideEntries = [];
+  zip.folder('ppt/slides')?.forEach((relativePath, file) => {
+    const match = relativePath.match(/^slide(\d+)\.xml$/i);
+    if (match) {
+      slideEntries.push({
+        number: parseInt(match[1], 10),
+        file,
+      });
+    }
+  });
+
+  slideEntries.sort((a, b) => a.number - b.number);
+  const slideTexts = [];
+
+  for (let idx = 0; idx < slideEntries.length; idx++) {
+    const entry = slideEntries[idx];
+    const xmlText = await entry.file.async('string');
+    const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
+
+    const textNodes = Array.from(xmlDoc.getElementsByTagNameNS('*', 't'));
+    const textPieces = textNodes
+      .map((t) => t.textContent?.trim() || '')
+      .filter((t) => t.length > 0);
+
+    if (textPieces.length > 0) {
+      slideTexts.push(`Slide ${idx + 1}:\n${textPieces.join('\n')}`);
+    }
+  }
+
+  return slideTexts.join('\n\n');
+};
+
+/**
+ * Extract all readable text from a PDF ArrayBuffer.
+ */
+export const extractTextFromPdf = async (arrayBuffer) => {
+  const { pdfDoc, totalSlides } = await loadPdfFromBuffer(arrayBuffer);
+  const pageTexts = [];
+
+  for (let pageNum = 1; pageNum <= totalSlides; pageNum++) {
+    const page = await pdfDoc.getPage(pageNum);
+    const textContent = await page.getTextContent();
+    const pageString = textContent.items
+      .map((item) => item.str || '')
+      .join(' ')
+      .trim();
+
+    if (pageString) {
+      pageTexts.push(`Slide/Page ${pageNum}:\n${pageString}`);
+    }
+  }
+
+  return pageTexts.join('\n\n');
+};
+
+/**
  * Load a PDF ArrayBuffer via pdfjs-dist and return the document + page count.
  */
 export const loadPdfFromBuffer = async (arrayBuffer) => {
