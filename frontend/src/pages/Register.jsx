@@ -93,7 +93,7 @@ const Register = () => {
         </Link>
       </motion.div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-[500px] w-full"
@@ -101,7 +101,7 @@ const Register = () => {
         <div className="bg-white rounded-[2.5rem] shadow-xl shadow-blue-900/5 border border-gray-100 overflow-hidden">
           <div className="p-8 md:p-10">
             <div className="text-center mb-8">
-              <motion.div 
+              <motion.div
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.2 }}
@@ -114,7 +114,7 @@ const Register = () => {
             </div>
 
             {error && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="bg-red-50 text-red-600 p-4 rounded-2xl mb-6 text-sm font-semibold flex items-center border border-red-100 gap-3"
@@ -134,36 +134,32 @@ const Register = () => {
                   <button
                     type="button"
                     onClick={() => handleRoleSelect('student')}
-                    className={`p-3.5 rounded-2xl border text-left flex items-center gap-3 transition-all ${
-                      formData.role === 'student'
+                    className={`p-3.5 rounded-2xl border text-left flex items-center gap-3 transition-all ${formData.role === 'student'
                         ? 'border-blue-600 bg-blue-50/60 ring-2 ring-blue-500/20 text-blue-900'
                         : 'border-gray-200 bg-gray-50/50 hover:bg-gray-100 text-gray-700'
-                    }`}
+                      }`}
                   >
                     <div className={`p-2 rounded-xl ${formData.role === 'student' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
                       <GraduationCap size={18} />
                     </div>
                     <div>
                       <div className="font-bold text-sm">Student</div>
-                      <div className="text-xs text-gray-500">Join classes</div>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleRoleSelect('faculty')}
-                    className={`p-3.5 rounded-2xl border text-left flex items-center gap-3 transition-all ${
-                      formData.role === 'faculty'
+                    className={`p-3.5 rounded-2xl border text-left flex items-center gap-3 transition-all ${formData.role === 'faculty'
                         ? 'border-indigo-600 bg-indigo-50/60 ring-2 ring-indigo-500/20 text-indigo-900'
                         : 'border-gray-200 bg-gray-50/50 hover:bg-gray-100 text-gray-700'
-                    }`}
+                      }`}
                   >
                     <div className={`p-2 rounded-xl ${formData.role === 'faculty' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
                       <Briefcase size={18} />
                     </div>
                     <div>
                       <div className="font-bold text-sm">Faculty</div>
-                      <div className="text-xs text-gray-500">Teach & grade</div>
                     </div>
                   </button>
                 </div>
@@ -254,7 +250,6 @@ const Register = () => {
                     >
                       Privacy Terms and Conditions
                     </button>
-                    , including the 75% assessment passing mastery requirement.
                   </span>
                 </label>
               </div>

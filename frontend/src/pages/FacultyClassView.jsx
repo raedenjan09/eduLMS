@@ -516,17 +516,17 @@ const FacultyClassView = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-200/80 shadow-xs hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 overflow-hidden"
                   >
-                    <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3 sm:gap-4 min-w-0 flex-1">
+                    <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
                       <div className="w-10 h-10 sm:w-11 sm:h-11 bg-blue-600 text-white rounded-xl flex items-center justify-center font-extrabold text-sm shrink-0 shadow-xs">
                         {lesson.order}
                       </div>
-                      <div className="min-w-0 flex-1 flex flex-col items-center sm:items-start">
+                      <div className="min-w-0 flex-1">
                         <h3 className="text-sm sm:text-base font-bold text-gray-900 break-all sm:break-words leading-snug">
                           {lesson.title}
                         </h3>
                         
                         {/* Lesson Meta Badges */}
-                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2 mt-2">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2">
                           {lesson.presentationType === 'create' ||
                           (lesson.presentationType !== 'upload' &&
                             lesson.slides?.length > 0 &&
@@ -563,10 +563,10 @@ const FacultyClassView = () => {
                       </div>
                     </div>
 
-                    {/* Actions — Middle Aligned on Mobile */}
-                    <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-gray-100 w-full md:w-auto">
+                    {/* Actions — 1 Single Horizontal Row */}
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-nowrap overflow-x-auto pt-3 md:pt-0 border-t md:border-t-0 border-gray-100 w-full md:w-auto pb-1 md:pb-0 shrink-0">
                       {/* Reorder Up/Down Buttons */}
-                      <div className="flex items-center bg-gray-100 rounded-xl p-0.5">
+                      <div className="flex items-center bg-gray-100 rounded-xl p-0.5 shrink-0">
                         <button
                           type="button"
                           disabled={idx === 0 || reorderingLessonId === lesson._id}
@@ -592,7 +592,7 @@ const FacultyClassView = () => {
                           setLessonToEdit(lesson);
                           setIsLessonModalOpen(true);
                         }}
-                        className="px-3.5 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl text-xs font-bold transition-colors inline-flex items-center gap-1.5"
+                        className="px-2.5 sm:px-3.5 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl text-xs font-bold transition-colors inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap"
                         title="Edit Topic & Presentation"
                       >
                         <Edit size={13} />
@@ -604,19 +604,19 @@ const FacultyClassView = () => {
                           setSelectedLessonForQuiz(lesson);
                           setIsQuizModalOpen(true);
                         }}
-                        className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        className={`px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
                           lesson.hasQuiz
                             ? 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
                             : 'bg-purple-600 text-white hover:bg-purple-700 shadow-xs'
                         }`}
                       >
                         <HelpCircle size={14} />
-                        {lesson.hasQuiz ? 'Edit Assessment' : 'Create Assessment'}
+                        <span>{lesson.hasQuiz ? 'Edit Assessment' : 'Create Assessment'}</span>
                       </button>
 
                       <button
                         onClick={() => handleDeleteLesson(lesson._id)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors shrink-0"
                         title="Delete Topic"
                       >
                         <Trash2 size={15} />
