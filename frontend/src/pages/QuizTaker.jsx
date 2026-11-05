@@ -48,8 +48,8 @@ const QuizTaker = () => {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
-  const [timeLeftSeconds, setTimeLeftSeconds] = useState(1800); // Live countdown timer (default 30 mins)
-  const [totalTimeSeconds, setTotalTimeSeconds] = useState(1800);
+  const [timeLeftSeconds, setTimeLeftSeconds] = useState(null); // Real-time countdown timer if timed
+  const [totalTimeSeconds, setTotalTimeSeconds] = useState(null);
 
   const autoSubmittedRef = useRef(false);
 
@@ -64,11 +64,15 @@ const QuizTaker = () => {
     setResult(null);
     autoSubmittedRef.current = false;
 
-    // Real-time countdown: use configured timeLimit or default to 30 mins
-    const minutes = Number(quizData.timeLimit) > 0 ? Number(quizData.timeLimit) : 30;
-    const totalSecs = minutes * 60;
-    setTimeLeftSeconds(totalSecs);
-    setTotalTimeSeconds(totalSecs);
+    // Real-time countdown: depends on faculty/user input (0 = untimed)
+    if (quizData.timeLimit && Number(quizData.timeLimit) > 0) {
+      const totalSecs = Number(quizData.timeLimit) * 60;
+      setTimeLeftSeconds(totalSecs);
+      setTotalTimeSeconds(totalSecs);
+    } else {
+      setTimeLeftSeconds(null);
+      setTotalTimeSeconds(null);
+    }
   }, []);
 
   const loadQuiz = async () => {
@@ -271,24 +275,26 @@ const QuizTaker = () => {
 
           {!result && (
             <div className="flex items-center gap-2 shrink-0">
-              {/* Real-time countdown clock in navbar */}
-              <div
-                className={`flex items-center gap-1.5 text-xs font-black px-3 py-1.5 rounded-xl border shadow-xs transition-colors ${
-                  timeLeftSeconds <= 60
-                    ? 'bg-red-50 text-red-700 border-red-300 animate-pulse'
-                    : timeLeftSeconds <= 180
-                      ? 'bg-amber-50 text-amber-800 border-amber-300'
-                      : 'bg-indigo-50 text-indigo-900 border-indigo-200'
-                }`}
-              >
-                <Clock size={14} className={timeLeftSeconds <= 60 ? 'text-red-600 animate-spin' : 'text-indigo-600'} />
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider hidden sm:inline">
-                  Time Left:
-                </span>
-                <span className="font-mono text-sm font-black tracking-tight">
-                  {formatTimer(timeLeftSeconds)}
-                </span>
-              </div>
+              {/* Real-time countdown clock in navbar when timed */}
+              {timeLeftSeconds !== null && (
+                <div
+                  className={`flex items-center gap-1.5 text-xs font-black px-3 py-1.5 rounded-xl border shadow-xs transition-colors ${
+                    timeLeftSeconds <= 60
+                      ? 'bg-red-50 text-red-700 border-red-300 animate-pulse'
+                      : timeLeftSeconds <= 180
+                        ? 'bg-amber-50 text-amber-800 border-amber-300'
+                        : 'bg-indigo-50 text-indigo-900 border-indigo-200'
+                  }`}
+                >
+                  <Clock size={14} className={timeLeftSeconds <= 60 ? 'text-red-600 animate-spin' : 'text-indigo-600'} />
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider hidden sm:inline">
+                    Time Left:
+                  </span>
+                  <span className="font-mono text-sm font-black tracking-tight">
+                    {formatTimer(timeLeftSeconds)}
+                  </span>
+                </div>
+              )}
 
               <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-purple-700 bg-purple-50 px-2.5 sm:px-3 py-1.5 rounded-xl border border-purple-200">
                 <HelpCircle size={14} />
@@ -310,11 +316,23 @@ const QuizTaker = () => {
             <span>{totalQuestions} Questions</span>
             <span>•</span>
             <span>Minimum Passing Score: <strong>{quiz.passingScore}%</strong></span>
-            <span>•</span>
-            <span className="inline-flex items-center gap-1 text-indigo-700 font-bold">
-              <Clock size={13} />
-              Real-Time Timer: {Math.round(totalTimeSeconds / 60)} Minutes
-            </span>
+            {quiz.timeLimit > 0 ? (
+              <>
+                <span>•</span>
+                <span className="inline-flex items-center gap-1 text-indigo-700 font-bold">
+                  <Clock size={13} />
+                  Real-Time Timer: {quiz.timeLimit} Minutes
+                </span>
+              </>
+            ) : (
+              <>
+                <span>•</span>
+                <span className="inline-flex items-center gap-1 text-gray-500 font-medium">
+                  <Clock size={13} />
+                  Untimed Assessment
+                </span>
+              </>
+            )}
             <span>•</span>
             <span className="inline-flex items-center gap-1 text-indigo-600 font-semibold">
               <Shuffle size={13} />
@@ -323,8 +341,8 @@ const QuizTaker = () => {
           </div>
         </div>
 
-        {/* Prominent Real-Time Countdown Timer Card */}
-        {!result && (
+        {/* Prominent Real-Time Countdown Timer Card (Shown when faculty configured a time limit) */}
+        {!result && timeLeftSeconds !== null && (
           <div className="mb-6 p-4.5 bg-white border border-gray-200/90 rounded-2xl shadow-xs space-y-2.5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -351,7 +369,7 @@ const QuizTaker = () => {
                       {formatTimer(timeLeftSeconds)}
                     </span>
                     <span className="text-xs font-semibold text-gray-500">
-                      remaining of {Math.round(totalTimeSeconds / 60)}:00
+                      remaining of {quiz.timeLimit}:00
                     </span>
                   </div>
                 </div>
@@ -376,7 +394,7 @@ const QuizTaker = () => {
                     : 'bg-indigo-600'
                 }`}
                 style={{
-                  width: `${Math.max(0, Math.min(100, (timeLeftSeconds / totalTimeSeconds) * 100))}%`
+                  width: `${Math.max(0, Math.min(100, (timeLeftSeconds / (quiz.timeLimit * 60)) * 100))}%`
                 }}
               />
             </div>
