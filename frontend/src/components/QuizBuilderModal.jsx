@@ -27,14 +27,13 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // AI Assistant States (Powered exclusively by xAI Grok)
+  // AI Assistant States (Google Gemini 1.5 Flash)
   const [lessonData, setLessonData] = useState(null);
   const [aiQuestionCount, setAiQuestionCount] = useState(10);
   const [aiDifficulty, setAiDifficulty] = useState('medium');
-  const [grokModel, setGrokModel] = useState('grok-beta'); // 'grok-beta' | 'grok-2'
   const [aiCustomText, setAiCustomText] = useState('');
   const [aiCustomApiKey, setAiCustomApiKey] = useState(
-    () => localStorage.getItem('lms_grok_api_key') || localStorage.getItem('lms_ai_api_key') || ''
+    () => localStorage.getItem('lms_gemini_api_key') || localStorage.getItem('lms_ai_api_key') || ''
   );
   const [showAiSettings, setShowAiSettings] = useState(false);
   const [aiScanning, setAiScanning] = useState(false);
@@ -150,19 +149,18 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
         }
       }
 
-      setAiScanStep('xAI Grok is analyzing presentation slides & formulating questions...');
+      setAiScanStep('Google Gemini is scanning presentation slides & formulating assessment questions...');
 
       const payload = {
         lessonId,
         contentText,
         questionCount: aiQuestionCount,
         difficulty: aiDifficulty,
-        model: grokModel,
         apiKey: aiCustomApiKey.trim() || undefined,
       };
 
       if (aiCustomApiKey.trim()) {
-        localStorage.setItem('lms_grok_api_key', aiCustomApiKey.trim());
+        localStorage.setItem('lms_gemini_api_key', aiCustomApiKey.trim());
       }
 
       const { data } = await API.post('/quizzes/generate-ai', payload);
@@ -170,18 +168,20 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
       if (data?.questions && data.questions.length >= 10) {
         setAiGeneratedQuestions(data.questions);
         const engineLabel =
-          data.source === 'grok'
-            ? `xAI Grok (${data.model || grokModel})`
+          data.source === 'gemini'
+            ? 'Google Gemini 1.5 Flash'
+            : data.source === 'grok'
+            ? 'xAI Grok'
             : 'Heuristic Presentation Extractor';
         toast.success(
           `Crafted ${data.questions.length} questions using ${engineLabel}!`,
-          'Grok Assessment Ready'
+          'AI Assessment Ready'
         );
         if (data.warning) {
-          toast.info(data.warning, 'Grok Engine Note');
+          toast.info(data.warning, 'AI Engine Note');
         }
       } else {
-        setError('Grok could not generate enough questions. Please ensure the presentation has readable slide content.');
+        setError('AI could not generate enough questions. Please ensure the presentation has readable slide content.');
       }
     } catch (err) {
       console.error('AI quiz generation error:', err);
@@ -540,7 +540,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                 }`}
               >
                 <Bot size={15} className={activeTab === 'ai' ? 'text-white' : 'text-purple-600'} />
-                <span>✨ Grok AI (Scan Slides)</span>
+                <span>✨ Gemini AI (Scan Slides)</span>
                 {aiGeneratedQuestions.length > 0 && (
                   <span className="ml-0.5 px-1.5 py-0.2 text-[10px] bg-green-500 text-white rounded-full font-bold">
                     {aiGeneratedQuestions.length}
@@ -764,10 +764,10 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                       </div>
                       <div>
                         <h4 className="font-extrabold text-base text-gray-900 flex items-center gap-2">
-                          xAI Grok Presentation Quiz Generator
+                          AI Presentation Quiz Generator (Google Gemini)
                         </h4>
                         <p className="text-xs text-gray-600 leading-relaxed">
-                          Powered exclusively by xAI Grok. Scans PowerPoint slides (.pptx) or PDF presentation decks to automatically craft 10–20 comprehensive assessment questions.
+                          Powered by <strong>Google Gemini 1.5 Flash</strong> (100% Free). Scans PowerPoint slides (.pptx) or PDF presentation decks to automatically craft 10–20 comprehensive assessment questions.
                         </p>
                       </div>
                     </div>
@@ -910,48 +910,29 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                       className="text-xs font-bold text-purple-600 hover:text-purple-700 flex items-center gap-1"
                     >
                       <Key size={13} />
-                      <span>{showAiSettings ? 'Hide Grok Settings' : 'xAI Grok API Key'}</span>
+                      <span>{showAiSettings ? 'Hide Gemini Settings' : 'Gemini API Key (Free)'}</span>
                       {showAiSettings ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                     </button>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Grok Model Selection */}
-                    <div className="md:col-span-2">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="block text-xs font-bold text-gray-700">
-                          xAI Grok Model
-                        </span>
-                        <span className="text-[11px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
-                          🚀 Powered Exclusively by xAI Grok
-                        </span>
+                    {/* Model Banner */}
+                    <div className="md:col-span-2 p-3 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200/80 rounded-xl flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                        <div>
+                          <p className="text-xs font-bold text-gray-900">Google Gemini 1.5 Flash</p>
+                          <p className="text-[11px] text-gray-500">100% Free tier (15 requests/min, 1,500/day, no credit card required)</p>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[
-                          { id: 'grok-beta', label: '🚀 Grok Beta', desc: 'Fast academic test reasoning & generation' },
-                          { id: 'grok-2', label: '⚡ Grok 2', desc: 'Advanced academic rigor & multi-concept depth' },
-                        ].map((m) => (
-                          <button
-                            key={m.id}
-                            type="button"
-                            onClick={() => setGrokModel(m.id)}
-                            className={`py-2.5 px-3.5 rounded-xl text-xs font-bold transition-all border text-left ${
-                              grokModel === m.id
-                                ? 'bg-purple-600 text-white border-purple-600 shadow-sm shadow-purple-200'
-                                : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                            }`}
-                          >
-                            <div>{m.label}</div>
-                            <div
-                              className={`text-[10px] font-normal mt-0.5 ${
-                                grokModel === m.id ? 'text-purple-200' : 'text-gray-400'
-                              }`}
-                            >
-                              {m.desc}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
+                      <a
+                        href="https://aistudio.google.com/app/apikey"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-purple-100 text-purple-700 border border-purple-300 rounded-lg text-xs font-bold shadow-sm transition-all shrink-0"
+                      >
+                        <span>Get Free Key (Google AI Studio) ↗</span>
+                      </a>
                     </div>
 
                     {/* Question Count Selection */}
@@ -1005,33 +986,40 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                     </div>
                   </div>
 
-                  {/* API Key Drawer (xAI Grok) */}
+                  {/* API Key Drawer (Google Gemini) */}
                   {showAiSettings && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="p-3.5 bg-gray-50 border border-gray-200 rounded-xl space-y-2.5 text-xs"
+                      className="p-4 bg-purple-50/60 border border-purple-200 rounded-2xl space-y-3 text-xs"
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="font-bold text-gray-800 flex items-center gap-1.5">
-                          <Key size={13} className="text-purple-600" />
-                          xAI Grok API Key (Optional)
+                          <Key size={14} className="text-purple-600" />
+                          Google Gemini API Key (100% Free)
                         </span>
-                        <span className="text-[10px] text-gray-500">Stored securely in your browser</span>
+                        <a
+                          href="https://aistudio.google.com/app/apikey"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-purple-700 hover:underline font-bold text-[11px]"
+                        >
+                          Open aistudio.google.com ↗
+                        </a>
                       </div>
                       <input
                         type="password"
                         value={aiCustomApiKey}
                         onChange={(e) => setAiCustomApiKey(e.target.value)}
-                        placeholder="xai-... (leave empty to use server pre-configured key)"
-                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                        placeholder="AIzaSy... (Paste your free Gemini API key here)"
+                        className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-inner"
                       />
                       <div className="flex items-center justify-between text-[11px] text-gray-500">
                         <span>
                           {aiCustomApiKey
-                            ? '✅ Custom xAI Grok Key Configured'
-                            : 'Using server default xAI Grok engine'}
+                            ? '✅ Gemini API Key Configured & Saved in your browser'
+                            : 'Click "Get Free Key" to sign in with your Google Account and generate a key in seconds.'}
                         </span>
                         {aiCustomApiKey && (
                           <button
@@ -1053,7 +1041,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                     <Loader2 className="animate-spin text-purple-600" size={32} />
                     <div>
                       <p className="text-sm font-bold text-purple-900">{aiScanStep || 'Analyzing presentation materials...'}</p>
-                      <p className="text-xs text-purple-700 mt-0.5">Formulating 4-choice questions, answer keys, and academic explanations with Grok...</p>
+                      <p className="text-xs text-purple-700 mt-0.5">Formulating 4-choice questions, answer keys, and academic explanations with Gemini...</p>
                     </div>
                   </div>
                 ) : (
@@ -1063,7 +1051,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                     className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 text-white font-bold text-sm hover:from-purple-700 hover:to-indigo-800 transition-all shadow-lg shadow-purple-200 flex items-center justify-center gap-2"
                   >
                     <Bot size={18} />
-                    <span>✨ Scan Materials & Generate Assessment with Grok ({aiQuestionCount} Questions)</span>
+                    <span>✨ Scan Materials & Generate Assessment ({aiQuestionCount} Questions)</span>
                   </button>
                 )}
 

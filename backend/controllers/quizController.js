@@ -451,7 +451,61 @@ const extractJsonArray = (text) => {
   return null;
 };
 
-// Call xAI Grok API (sole external AI engine)
+// Call Google Gemini API (gemini-1.5-flash - 100% Free Tier on Google AI Studio)
+const callGeminiAI = async (text, targetCount, difficulty, apiKey) => {
+  const prompt = `You are an expert academic educator designing an assessment for higher education students.
+Based STRICTLY on the following presentation/lecture content, generate exactly ${targetCount} high-quality, academic multiple-choice questions.
+Target Difficulty: ${difficulty}.
+
+Requirements:
+1. Each question must test comprehension, definitions, or applied knowledge from the provided material.
+2. Provide exactly 4 distinct, plausible answer choices for each question.
+3. Indicate the correct answer using a 0-based integer index (0 for Option A, 1 for Option B, 2 for Option C, 3 for Option D).
+4. Provide a clear, brief explanation explaining why the correct choice is accurate.
+5. Return ONLY a valid JSON array of objects matching the schema:
+[
+  {
+    "questionText": "Question statement here",
+    "options": ["Choice A", "Choice B", "Choice C", "Choice D"],
+    "correctAnswer": 0,
+    "explanation": "Brief explanation"
+  }
+]
+
+Presentation Material:
+${text.slice(0, 25000)}`;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.3,
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errJson = await response.json().catch(() => ({}));
+    const errMsg = errJson?.error?.message || `HTTP ${response.status}`;
+    throw new Error(`Google Gemini error: ${errMsg}`);
+  }
+
+  const data = await response.json();
+  const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  const questions = extractJsonArray(candidateText);
+  if (!questions || questions.length < 10) {
+    throw new Error('Google Gemini returned an incomplete or invalid question array.');
+  }
+  return questions;
+};
+
+// Call xAI Grok API (Optional secondary engine)
 const callGrokAI = async (text, targetCount, difficulty, apiKey, model = 'grok-beta') => {
   const selectedModel = model === 'grok-2' ? 'grok-2-latest' : 'grok-beta';
   const prompt = `You are an expert academic educator designing an assessment for higher education students.
@@ -578,11 +632,11 @@ const generateHeuristicQuestions = (text, targetCount = 10) => {
   return questions;
 };
 
-// @desc    Generate quiz questions using xAI Grok scanning of presentation content
+// @desc    Generate quiz questions using Google Gemini 1.5 Flash (Free Tier)
 // @route   POST /api/quizzes/generate-ai
 // @access  Private (Faculty)
 export const generateQuizWithAI = async (req, res) => {
-  const { lessonId, contentText, questionCount = 10, difficulty = 'medium', apiKey, model = 'grok-beta' } = req.body;
+  const { lessonId, contentText, questionCount = 10, difficulty = 'medium', apiKey, model = 'gemini-1.5-flash' } = req.body;
   const targetCount = Math.min(20, Math.max(10, Number(questionCount) || 10));
 
   let extractedText = (contentText || '').trim();
@@ -605,7 +659,7 @@ export const generateQuizWithAI = async (req, res) => {
         }
       }
     } catch (err) {
-      console.warn('Could not read lesson for Grok AI generator:', err);
+      console.warn('Could not read lesson for AI generator:', err);
     }
   }
 
@@ -617,17 +671,39 @@ export const generateQuizWithAI = async (req, res) => {
   }
 
   const cleanKey = (apiKey || '').trim();
-  const grokKey = cleanKey || process.env.XAI_API_KEY || process.env.GROK_API_KEY;
+  const geminiKey = (!cleanKey.startsWith('xai-') && cleanKey) || process.env.GEMINI_API_KEY;
+  const grokKey = cleanKey.startsWith('xai-') ? cleanKey : (process.env.XAI_API_KEY || process.env.GROK_API_KEY);
 
   let warningNotice = null;
 
-  // 1. Solely use xAI Grok if key is provided or present in environment
-  if (grokKey) {
+  // 1. Google Gemini 1.5 Flash (Primary Free Engine)
+  if (geminiKey) {
+    try {
+      const geminiQuestions = await callGeminiAI(extractedText, targetCount, difficulty, geminiKey);
+      return res.json({
+        source: 'gemini',
+        model: 'gemini-1.5-flash',
+        count: geminiQuestions.length,
+        questions: geminiQuestions.slice(0, 20).map((q) => ({
+          questionText: String(q.questionText || '').trim(),
+          options: (q.options || []).slice(0, 4).map((opt) => String(opt || '').trim()),
+          correctAnswer: typeof q.correctAnswer === 'number' ? q.correctAnswer : 0,
+          explanation: String(q.explanation || '').trim(),
+        })),
+      });
+    } catch (geminiErr) {
+      console.warn('Google Gemini API call error:', geminiErr.message);
+      warningNotice = `Google Gemini notice: ${geminiErr.message}`;
+    }
+  }
+
+  // 2. Optional xAI Grok (if user specifically provided xai-* key)
+  if (cleanKey.startsWith('xai-') && grokKey) {
     try {
       const grokQuestions = await callGrokAI(extractedText, targetCount, difficulty, grokKey, model);
       return res.json({
         source: 'grok',
-        model: model === 'grok-2' ? 'grok-2' : 'grok-beta',
+        model: 'grok-beta',
         count: grokQuestions.length,
         questions: grokQuestions.slice(0, 20).map((q) => ({
           questionText: String(q.questionText || '').trim(),
@@ -642,11 +718,13 @@ export const generateQuizWithAI = async (req, res) => {
         ? 'xAI team has no active credits on console.x.ai. Emergency heuristic extractor was used so you can proceed.'
         : `xAI Grok notice: ${grokErr.message}`;
     }
-  } else {
-    warningNotice = 'No xAI Grok API key found. Using heuristic presentation parser.';
   }
 
-  // 2. Built-in intelligent heuristic generator fallback (ensures faculty is never blocked if Grok credits expire)
+  if (!geminiKey && !grokKey) {
+    warningNotice = 'No Gemini API key provided. Using built-in heuristic presentation parser.';
+  }
+
+  // 3. Built-in intelligent heuristic generator fallback (ensures faculty is never blocked)
   const fallbackQuestions = generateHeuristicQuestions(extractedText, targetCount);
   return res.json({
     source: 'built-in-heuristic',
