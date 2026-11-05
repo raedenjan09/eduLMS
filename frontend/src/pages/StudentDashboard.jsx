@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  GraduationCap, Award, LogOut, 
+import {
+  GraduationCap, Award, LogOut,
   KeyRound, ChevronRight, CheckCircle2, AlertCircle, Loader2,
   UserMinus, Settings, Search, PlayCircle, BookOpen
 } from 'lucide-react';
@@ -143,7 +143,7 @@ const StudentDashboard = () => {
             <Settings size={15} className="text-gray-400" />
           </button>
 
-          <button 
+          <button
             onClick={handleLogout}
             title="Log Out"
             className="p-1.5 sm:p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
@@ -160,9 +160,6 @@ const StudentDashboard = () => {
             <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
               Welcome back, {user?.name?.split(' ')[0] || 'Student'}!
             </h1>
-            <p className="text-gray-500 mt-1 text-xs md:text-sm">
-              1. Open your subject • 2. Study the PowerPoint slides • 3. Pass the quiz (≥75%) to unlock the next lesson.
-            </p>
           </div>
           <button
             onClick={() => setIsJoinModalOpen(true)}
@@ -254,11 +251,10 @@ const StudentDashboard = () => {
                     <button
                       key={tab.id}
                       onClick={() => setProgressFilter(tab.id)}
-                      className={`px-3 py-1.5 rounded-lg transition-all ${
-                        progressFilter === tab.id
+                      className={`px-3 py-1.5 rounded-lg transition-all ${progressFilter === tab.id
                           ? 'bg-indigo-600 text-white'
                           : 'text-gray-500 hover:text-gray-800'
-                      }`}
+                        }`}
                     >
                       {tab.label}
                     </button>
@@ -359,9 +355,8 @@ const StudentDashboard = () => {
                       </div>
                       <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all duration-500 ${
-                            cls.progressPercent === 100 ? 'bg-emerald-500' : 'bg-indigo-600'
-                          }`}
+                          className={`h-full rounded-full transition-all duration-500 ${cls.progressPercent === 100 ? 'bg-emerald-500' : 'bg-indigo-600'
+                            }`}
                           style={{ width: `${cls.progressPercent || 0}%` }}
                         />
                       </div>
