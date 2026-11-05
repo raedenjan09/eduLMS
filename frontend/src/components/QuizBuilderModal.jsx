@@ -167,18 +167,12 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
 
       if (data?.questions && data.questions.length >= 10) {
         setAiGeneratedQuestions(data.questions);
-        const engineLabel =
-          data.source === 'gemini'
-            ? 'Google Gemini 2.5 Flash'
-            : data.source === 'grok'
-            ? 'xAI Grok'
-            : 'Heuristic Presentation Extractor';
         toast.success(
-          `Crafted ${data.questions.length} questions using ${engineLabel}!`,
-          'AI Assessment Ready'
+          `Generated ${data.questions.length} assessment questions from the presentation!`,
+          'Assessment Ready'
         );
         if (data.warning) {
-          toast.info(data.warning, 'AI Engine Note');
+          console.info('AI generator notice:', data.warning);
         }
       } else {
         setError('AI could not generate enough questions. Please ensure the presentation has readable slide content.');
@@ -540,7 +534,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                 }`}
               >
                 <Bot size={15} className={activeTab === 'ai' ? 'text-white' : 'text-purple-600'} />
-                <span>✨ Gemini AI (Scan Slides)</span>
+                <span>✨ AI Assistant (Scan Slides)</span>
                 {aiGeneratedQuestions.length > 0 && (
                   <span className="ml-0.5 px-1.5 py-0.2 text-[10px] bg-green-500 text-white rounded-full font-bold">
                     {aiGeneratedQuestions.length}
@@ -764,10 +758,10 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                       </div>
                       <div>
                         <h4 className="font-extrabold text-base text-gray-900 flex items-center gap-2">
-                          AI Presentation Quiz Generator (Google Gemini)
+                          AI Assessment Generator
                         </h4>
                         <p className="text-xs text-gray-600 leading-relaxed">
-                          Powered by <strong>Google Gemini 2.5 Flash</strong> (100% Free). Scans PowerPoint slides (.pptx) or PDF presentation decks to automatically craft 10–20 comprehensive assessment questions.
+                          Automatically scan lecture slides (.pptx) or presentation documents (.pdf) to construct comprehensive 10–20 question assessments with complete answer keys and explanations.
                         </p>
                       </div>
                     </div>
@@ -902,39 +896,14 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
                       <Settings2 size={15} className="text-purple-600" />
-                      Generation Parameters
+                      Assessment Parameters
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => setShowAiSettings(!showAiSettings)}
-                      className="text-xs font-bold text-purple-600 hover:text-purple-700 flex items-center gap-1"
-                    >
-                      <Key size={13} />
-                      <span>{showAiSettings ? 'Hide Gemini Settings' : 'Gemini API Key (Free)'}</span>
-                      {showAiSettings ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                    </button>
+                    <span className="text-[11px] font-semibold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
+                      Standard Multiple Choice (4 Choices)
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Model Banner */}
-                    <div className="md:col-span-2 p-3 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200/80 rounded-xl flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                        <div>
-                          <p className="text-xs font-bold text-gray-900">Google Gemini 2.5 Flash</p>
-                          <p className="text-[11px] text-gray-500">100% Free tier (15 requests/min, 1,500/day, no credit card required)</p>
-                        </div>
-                      </div>
-                      <a
-                        href="https://aistudio.google.com/app/apikey"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-purple-100 text-purple-700 border border-purple-300 rounded-lg text-xs font-bold shadow-sm transition-all shrink-0"
-                      >
-                        <span>Get Free Key (Google AI Studio) ↗</span>
-                      </a>
-                    </div>
-
                     {/* Question Count Selection */}
                     <div>
                       <span className="block text-xs font-bold text-gray-700 mb-2">
@@ -985,54 +954,6 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                       </div>
                     </div>
                   </div>
-
-                  {/* API Key Drawer (Google Gemini) */}
-                  {showAiSettings && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="p-4 bg-purple-50/60 border border-purple-200 rounded-2xl space-y-3 text-xs"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="font-bold text-gray-800 flex items-center gap-1.5">
-                          <Key size={14} className="text-purple-600" />
-                          Google Gemini API Key (100% Free)
-                        </span>
-                        <a
-                          href="https://aistudio.google.com/app/apikey"
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-purple-700 hover:underline font-bold text-[11px]"
-                        >
-                          Open aistudio.google.com ↗
-                        </a>
-                      </div>
-                      <input
-                        type="password"
-                        value={aiCustomApiKey}
-                        onChange={(e) => setAiCustomApiKey(e.target.value)}
-                        placeholder="AIzaSy... (Paste your free Gemini API key here)"
-                        className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 shadow-inner"
-                      />
-                      <div className="flex items-center justify-between text-[11px] text-gray-500">
-                        <span>
-                          {aiCustomApiKey
-                            ? '✅ Gemini API Key Configured & Saved in your browser'
-                            : 'Click "Get Free Key" to sign in with your Google Account and generate a key in seconds.'}
-                        </span>
-                        {aiCustomApiKey && (
-                          <button
-                            type="button"
-                            onClick={() => setAiCustomApiKey('')}
-                            className="text-red-500 hover:underline font-semibold"
-                          >
-                            Clear Key
-                          </button>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
                 </div>
 
                 {/* Scan Action / Progress Button */}
@@ -1041,7 +962,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                     <Loader2 className="animate-spin text-purple-600" size={32} />
                     <div>
                       <p className="text-sm font-bold text-purple-900">{aiScanStep || 'Analyzing presentation materials...'}</p>
-                      <p className="text-xs text-purple-700 mt-0.5">Formulating 4-choice questions, answer keys, and academic explanations with Gemini...</p>
+                      <p className="text-xs text-purple-700 mt-0.5">Formulating 4-choice questions, answer keys, and academic explanations...</p>
                     </div>
                   </div>
                 ) : (
@@ -1051,7 +972,7 @@ const QuizBuilderModal = ({ isOpen, onClose, lessonId, classId, lessonTitle, onQ
                     className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 text-white font-bold text-sm hover:from-purple-700 hover:to-indigo-800 transition-all shadow-lg shadow-purple-200 flex items-center justify-center gap-2"
                   >
                     <Bot size={18} />
-                    <span>✨ Scan Materials & Generate Assessment ({aiQuestionCount} Questions)</span>
+                    <span>✨ Scan Presentation & Generate Assessment ({aiQuestionCount} Questions)</span>
                   </button>
                 )}
 
