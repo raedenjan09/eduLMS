@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, HelpCircle, CheckCircle2, XCircle, 
+import {
+  ArrowLeft, HelpCircle, CheckCircle2, XCircle,
   RotateCcw, AlertCircle, ChevronRight, Loader2, Clock, Shuffle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -278,13 +278,12 @@ const QuizTaker = () => {
               {/* Real-time countdown clock in navbar when timed */}
               {timeLeftSeconds !== null && (
                 <div
-                  className={`flex items-center gap-1.5 text-xs font-black px-3 py-1.5 rounded-xl border shadow-xs transition-colors ${
-                    timeLeftSeconds <= 60
+                  className={`flex items-center gap-1.5 text-xs font-black px-3 py-1.5 rounded-xl border shadow-xs transition-colors ${timeLeftSeconds <= 60
                       ? 'bg-red-50 text-red-700 border-red-300 animate-pulse'
                       : timeLeftSeconds <= 180
                         ? 'bg-amber-50 text-amber-800 border-amber-300'
                         : 'bg-indigo-50 text-indigo-900 border-indigo-200'
-                  }`}
+                    }`}
                 >
                   <Clock size={14} className={timeLeftSeconds <= 60 ? 'text-red-600 animate-spin' : 'text-indigo-600'} />
                   <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider hidden sm:inline">
@@ -321,7 +320,7 @@ const QuizTaker = () => {
                 <span>•</span>
                 <span className="inline-flex items-center gap-1 text-indigo-700 font-bold">
                   <Clock size={13} />
-                  Real-Time Timer: {quiz.timeLimit} Minutes
+                  Timer: {quiz.timeLimit} Minutes
                 </span>
               </>
             ) : (
@@ -336,7 +335,7 @@ const QuizTaker = () => {
             <span>•</span>
             <span className="inline-flex items-center gap-1 text-indigo-600 font-semibold">
               <Shuffle size={13} />
-              Randomized Questions & Options
+
             </span>
           </div>
         </div>
@@ -387,11 +386,10 @@ const QuizTaker = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              className={`rounded-3xl p-6 sm:p-7 mb-6 border shadow-lg ${
-                result.passed
+              className={`rounded-3xl p-6 sm:p-7 mb-6 border shadow-lg ${result.passed
                   ? 'bg-gradient-to-br from-green-500 to-emerald-600 text-white border-green-600 shadow-green-200'
                   : 'bg-gradient-to-br from-rose-500 to-red-600 text-white border-red-600 shadow-red-200'
-              }`}
+                }`}
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
                 <div>
@@ -467,15 +465,14 @@ const QuizTaker = () => {
               <div
                 id={`quiz-q-${qIndex}`}
                 key={`${q.originalQuestionIndex}-${qIndex}`}
-                className={`p-6 rounded-3xl border transition-all ${
-                  result
+                className={`p-6 rounded-3xl border transition-all ${result
                     ? isCorrect
                       ? 'bg-white border-green-300 shadow-sm'
                       : 'bg-white border-red-300 shadow-sm'
                     : selectedOpt !== undefined
                       ? 'bg-white border-purple-200 shadow-sm'
                       : 'bg-white border-gray-200/80 shadow-sm'
-                }`}
+                  }`}
               >
                 {/* Question Header */}
                 <div className="flex items-center justify-between mb-3">
@@ -484,9 +481,8 @@ const QuizTaker = () => {
                   </span>
 
                   {result && (
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 ${
-                      isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'
-                    }`}>
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 ${isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'
+                      }`}>
                       {isCorrect ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
                       {isCorrect ? 'Correct' : 'Incorrect'}
                     </span>
@@ -526,11 +522,10 @@ const QuizTaker = () => {
                         onClick={() => handleSelectOption(qIndex, optIndex)}
                         className={`p-3.5 rounded-2xl border text-xs md:text-sm flex items-center gap-3 transition-all cursor-pointer ${optionStyle}`}
                       >
-                        <span className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                          isSelected
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${isSelected
                             ? 'bg-purple-600 text-white'
                             : 'bg-white border border-gray-300 text-gray-600'
-                        }`}>
+                          }`}>
                           {String.fromCharCode(65 + optIndex)}
                         </span>
                         <span className="flex-1 leading-snug">{opt.text}</span>
