@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, HelpCircle, CheckCircle2, XCircle, 
-  RotateCcw, AlertCircle, ChevronRight, Loader2, Clock, Shuffle, ShieldAlert
+  RotateCcw, AlertCircle, ChevronRight, Loader2, Clock, Shuffle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import API from '../api/axios';
@@ -341,66 +341,6 @@ const QuizTaker = () => {
           </div>
         </div>
 
-        {/* Prominent Real-Time Countdown Timer Card (Shown when faculty configured a time limit) */}
-        {!result && timeLeftSeconds !== null && (
-          <div className="mb-6 p-4.5 bg-white border border-gray-200/90 rounded-2xl shadow-xs space-y-2.5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${
-                    timeLeftSeconds <= 60
-                      ? 'bg-red-100 text-red-600 animate-bounce'
-                      : timeLeftSeconds <= 180
-                      ? 'bg-amber-100 text-amber-700'
-                      : 'bg-indigo-100 text-indigo-700'
-                  }`}
-                >
-                  <Clock size={22} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-                      Real-Time Countdown Timer
-                    </span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-mono text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
-                      {formatTimer(timeLeftSeconds)}
-                    </span>
-                    <span className="text-xs font-semibold text-gray-500">
-                      remaining of {quiz.timeLimit}:00
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <span className="text-[11px] font-bold text-gray-500 block">Assessment Progress</span>
-                <span className="text-sm font-extrabold text-purple-700">
-                  {answeredCount} of {totalQuestions} answered ({Math.round((answeredCount / totalQuestions) * 100)}%)
-                </span>
-              </div>
-            </div>
-
-            {/* Smooth live progress bar of remaining time */}
-            <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-              <div
-                className={`h-full transition-all duration-1000 ${
-                  timeLeftSeconds <= 60
-                    ? 'bg-red-500'
-                    : timeLeftSeconds <= 180
-                    ? 'bg-amber-500'
-                    : 'bg-indigo-600'
-                }`}
-                style={{
-                  width: `${Math.max(0, Math.min(100, (timeLeftSeconds / (quiz.timeLimit * 60)) * 100))}%`
-                }}
-              />
-            </div>
-          </div>
-        )}
-
         {/* Question Jump Navigator */}
         <div className="bg-white p-4 rounded-2xl border border-gray-200/80 shadow-xs mb-6">
           <div className="flex items-center justify-between text-[11px] font-bold text-gray-500 mb-2.5">
@@ -447,21 +387,21 @@ const QuizTaker = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              className={`rounded-3xl p-8 mb-8 border shadow-lg ${
+              className={`rounded-3xl p-6 sm:p-7 mb-6 border shadow-lg ${
                 result.passed
                   ? 'bg-gradient-to-br from-green-500 to-emerald-600 text-white border-green-600 shadow-green-200'
                   : 'bg-gradient-to-br from-rose-500 to-red-600 text-white border-red-600 shadow-red-200'
               }`}
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-1.5">
                     {result.passed ? (
-                      <CheckCircle2 size={24} className="text-white" />
+                      <CheckCircle2 size={22} className="text-white" />
                     ) : (
-                      <AlertCircle size={24} className="text-white" />
+                      <AlertCircle size={22} className="text-white" />
                     )}
-                    <span className="text-sm font-extrabold uppercase tracking-wider">
+                    <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider">
                       {result.passed ? 'Assessment Passed' : 'Assessment Not Passed'}
                     </span>
                   </div>
@@ -469,67 +409,45 @@ const QuizTaker = () => {
                   <h2 className="text-3xl md:text-4xl font-black">
                     Score: {result.score}%
                   </h2>
-                  <p className="text-xs opacity-90 mt-1">
+                  <p className="text-xs opacity-90 mt-1 font-medium">
                     Correct Answers: {result.rawScore} of {result.totalQuestions} Questions • Required: {result.passingScore}%
                   </p>
-                  <p className="text-xs mt-3 opacity-95 max-w-lg font-medium">
-                    {result.message}
-                  </p>
-
-                  {!result.passed && (
-                    <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/20 text-white/95 text-[11px] font-semibold">
-                      <ShieldAlert size={14} />
-                      <span>
-                        To maintain academic integrity, correct answers are only revealed upon achieving a passing score (75%). Questions and options are randomized on each attempt.
-                      </span>
-                    </div>
-                  )}
                 </div>
 
                 {/* Actions */}
-                <div className="flex flex-col gap-2.5 shrink-0">
+                <div className="flex flex-wrap sm:flex-col gap-2 shrink-0">
                   {result.passed ? (
-                    <button
-                      onClick={() =>
-                        navigate(
-                          result.nextLessonId
-                            ? `/student/lesson/${result.nextLessonId}`
-                            : `/student/class/${quiz.classId}`
-                        )
-                      }
-                      className="px-6 py-3.5 bg-white text-green-800 rounded-2xl font-bold text-xs hover:bg-green-50 transition-all shadow-md flex items-center justify-center gap-1.5"
-                    >
-                      <span>
-                        {result.nextLessonId ? 'Proceed to Next Topic' : 'Return to Course Syllabus'}
-                      </span>
-                      <ChevronRight size={16} />
-                    </button>
-                  ) : (
                     <>
                       <button
-                        onClick={handleRetake}
-                        className="px-6 py-3.5 bg-white text-red-700 rounded-2xl font-bold text-xs hover:bg-red-50 transition-all shadow-md flex items-center justify-center gap-2"
+                        onClick={() =>
+                          navigate(
+                            result.nextLessonId
+                              ? `/student/lesson/${result.nextLessonId}`
+                              : `/student/class/${quiz.classId}`
+                          )
+                        }
+                        className="px-6 py-3.5 bg-white text-green-800 rounded-2xl font-bold text-xs hover:bg-green-50 transition-all shadow-md flex items-center justify-center gap-1.5"
                       >
-                        <RotateCcw size={16} />
-                        <span>Retake Assessment</span>
+                        <span>
+                          {result.nextLessonId ? 'Proceed to Next Topic' : 'Return to Course Syllabus'}
+                        </span>
+                        <ChevronRight size={16} />
                       </button>
                       <button
-                        onClick={() => navigate(`/student/lesson/${quiz.lessonId}`)}
+                        onClick={handleRetake}
                         className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
                       >
-                        <ArrowLeft size={14} />
-                        <span>Return to Presentation</span>
+                        <RotateCcw size={14} />
+                        <span>Retake Assessment</span>
                       </button>
                     </>
-                  )}
-
-                  {result.passed && (
+                  ) : (
                     <button
                       onClick={handleRetake}
-                      className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+                      className="px-6 py-3.5 bg-white text-red-700 rounded-2xl font-bold text-xs hover:bg-red-50 transition-all shadow-md flex items-center justify-center gap-2"
                     >
-                      <RotateCcw size={14} />
-                      Retake for higher score
+                      <RotateCcw size={16} />
+                      <span>Retake Assessment</span>
                     </button>
                   )}
                 </div>
